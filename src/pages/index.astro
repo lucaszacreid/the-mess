@@ -11,7 +11,7 @@ const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
 const ogImage = `${site}/og.jpg`;
 const year = new Date().getFullYear();
 const directions = 'https://www.google.com/maps/search/?api=1&query=37+Otago+Street+Glasgow+G12+8JJ';
-const instagram = 'https://www.instagram.com/'; // PLACEHOLDER: replace with the real Instagram profile URL
+const instagram = 'https://www.instagram.com/themessconcept/';
 
 const nav = [
   ['about', 'About'],
@@ -49,6 +49,7 @@ const jsonLd = {
     addressCountry: 'GB',
   },
   hasMap: directions,
+  sameAs: [instagram],
   openingHoursSpecification: [
     {
       '@type': 'OpeningHoursSpecification',
@@ -180,7 +181,6 @@ const jsonLd = {
             <a class="text-link" href={directions} target="_blank" rel="noopener noreferrer">
               Get Directions<span class="sr-only"> (opens in a new tab)</span>
             </a>
-            <!-- PLACEHOLDER: Instagram URL -->
             <a class="text-link" href={instagram} target="_blank" rel="noopener noreferrer">
               Instagram<span class="sr-only"> (opens in a new tab)</span>
             </a>
