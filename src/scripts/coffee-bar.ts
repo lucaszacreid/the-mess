@@ -5,12 +5,13 @@
 // customer sips. Everything runs at a sped-up, timelapse pace. With reduced motion
 // the opening frame is drawn once and nothing moves. The loop pauses off screen.
 
-import { Figure, randomLook, rand, type Look } from './figure';
+import { Figure, rand, pick, type Look } from './figure';
 
 type State = 'walk' | 'queue' | 'order' | 'waitDrink' | 'receive' | 'toSpot' | 'mingle' | 'leave' | 'pass';
 
-const WALK_SPEED = 150; // svg units per second
-const STEP_RATE = 8.2; // stride phase, radians per second
+const WALK_SPEED = 150; // svg units per second (a brisk, sped-up walk)
+const ACCEL = 330; // how quickly people get going
+const DECEL = 260; // and how gently they slow to a stop
 const QUEUE_X = [526, 446, 366, 286];
 const EXIT_LEFT = -90;
 const EXIT_RIGHT = 1290;
@@ -22,13 +23,19 @@ class Customer {
   fig: Figure;
   state: State = 'walk';
   target: number;
-  speed = WALK_SPEED * rand(0.88, 1.12);
+  maxSpeed = WALK_SPEED * rand(0.86, 1.12);
+  vel = 0;
   timer = 0;
   nextSip = rand(1.5, 4);
   sipLeft = 0;
   spot: Spot | null = null;
   done = false;
   reaching = false;
+  // Little human habits while waiting
+  phoneUser = Math.random() < 0.4;
+  phoneOn = false;
+  habitT = rand(0.5, 2.5);
+  gestureLeft = 0;
 
   constructor(parent: SVGGElement, x: number, look?: Look) {
     this.fig = new Figure(parent, look);
@@ -36,16 +43,27 @@ class Customer {
     this.target = x;
   }
   get x() { return this.fig.x; }
-  get walking() { return Math.abs(this.target - this.fig.x) > 0.5; }
+  get walking() { return Math.abs(this.target - this.fig.x) > 0.5 || Math.abs(this.vel) > 1; }
 
+  /** Accelerate toward the target and ease to a stop on it. Returns true on arrival. */
   step(dt: number) {
     const d = this.target - this.fig.x;
-    if (Math.abs(d) <= 0.5) { this.fig.x = this.target; this.fig.walking = false; return false; }
-    this.fig.dir = d > 0 ? 1 : -1;
-    this.fig.x += this.fig.dir * Math.min(Math.abs(d), this.speed * dt);
-    this.fig.phase += STEP_RATE * dt * (this.speed / WALK_SPEED);
-    this.fig.walking = true;
-    if (Math.abs(this.target - this.fig.x) <= 0.5) { this.fig.x = this.target; this.fig.walking = false; return true; }
+    const dist = Math.abs(d);
+    if (dist <= 0.5 && Math.abs(this.vel) < 8) {
+      const was = this.vel !== 0 || dist > 0;
+      this.fig.x = this.target;
+      this.vel = 0;
+      this.fig.speed = 0;
+      this.fig.accel = 0;
+      return was && dt > 0;
+    }
+    const desired = Math.sign(d) * Math.min(this.maxSpeed, Math.sqrt(2 * DECEL * dist));
+    const dv = Math.max(-ACCEL * dt, Math.min(ACCEL * dt, desired - this.vel));
+    this.vel += dv;
+    this.fig.x += this.vel * dt;
+    if (Math.abs(this.vel) > 3) this.fig.dir = this.vel > 0 ? 1 : -1;
+    this.fig.speed = Math.abs(this.vel);
+    this.fig.accel = dt > 0 ? (Math.sign(this.vel) * dv) / dt : 0;
     return false;
   }
   remove() { this.fig.remove(); this.done = true; }
@@ -79,6 +97,8 @@ export function startCoffeeBar() {
     extras: ['earring'], height: 1, build: 1,
   });
   b1.x = 944;
+  b1.face(1);
+  b1.gaze = 7;
   const B1_TARGETS = {
     idle: [{ x: 960, y: 386 }, { x: 952, y: 392 }],
     tamp: [{ x: 980, y: 352 }, { x: 973, y: 357 }],
@@ -97,7 +117,7 @@ export function startCoffeeBar() {
     extras: ['glasses'], height: 1, build: 1.05,
   });
   seated.seated = true;
-  seated.dir = -1;
+  seated.face(-1);
   seated.x = 172;
   seated.y = 50;
   seated.hasCup = true;
@@ -184,7 +204,8 @@ export function startCoffeeBar() {
     const d = add(1010);
     d.fig.hasCup = true;
     leave(d, 'right');
-    d.fig.walking = true;
+    d.vel = d.maxSpeed;
+    d.fig.speed = d.maxSpeed;
     d.fig.phase = 0.9;
   }
 
@@ -247,7 +268,7 @@ export function startCoffeeBar() {
     });
     b1.arms = { kind: 'target', near: b1.toLocal(b1Hands[0]), far: b1.toLocal(b1Hands[1]) };
     b1.nod = b1Pose === 'idle' ? 0 : Math.sin(machine.t * 5) * 2;
-    b1.render();
+    b1.render(dt);
     jug.style.display = b1Pose === 'steam' ? '' : 'none';
     jug.setAttribute('transform', `translate(${b1.handWorld.x.toFixed(1)} ${b1.handWorld.y.toFixed(1)})`);
     steam.style.display = b1Pose === 'steam' ? '' : 'none';
@@ -260,8 +281,9 @@ export function startCoffeeBar() {
       seat.sipping = !seat.sipping;
       seated.arms = { kind: seat.sipping ? 'sip' : 'hold' };
       seat.t = seat.sipping ? rand(0.9, 1.3) : rand(3.5, 6.5);
+      seated.gaze = seat.sipping ? 0 : pick([-3, 0, 4, 8]);
     }
-    seated.render();
+    seated.render(dt);
 
     // Customers
     const chatting = spots[1].who?.state === 'mingle' && spots[2].who?.state === 'mingle';
@@ -305,12 +327,29 @@ export function startCoffeeBar() {
           if (!c.walking) c.remove();
           break;
       }
-      if (['queue', 'order', 'waitDrink', 'receive'].includes(c.state) && !c.walking) fig.dir = 1;
+      const waiting = ['queue', 'order', 'waitDrink', 'receive'].includes(c.state);
+      if (waiting && !c.walking) fig.dir = 1;
+
+      // Habits while standing: glance around, check the phone, look up at the barista
+      c.habitT -= dt;
+      if (c.habitT <= 0) {
+        c.habitT = rand(1.2, 3.4);
+        if (c.state === 'queue' && !c.walking && c.phoneUser) c.phoneOn = !c.phoneOn && Math.random() < 0.7;
+        else c.phoneOn = false;
+        fig.gaze = c.walking ? pick([0, 0, 3]) : pick([-5, -2, 0, 3, 5]);
+        if (c.state === 'mingle' && chatting && !c.sipLeft) c.gestureLeft = Math.random() < 0.5 ? rand(0.8, 1.6) : 0;
+      }
+      if (c.state !== 'queue' || c.walking) c.phoneOn = false;
+      if (c.state === 'order' || c.state === 'waitDrink' || c.reaching) fig.gaze = -3;
+      if (c.gestureLeft > 0) c.gestureLeft -= dt;
 
       fig.arms = c.reaching
         ? { kind: 'target', near: fig.toLocal(BARISTA_HAND) }
-        : c.sipLeft > 0 ? { kind: 'sip' } : { kind: 'swing' };
-      if (!c.done) fig.render();
+        : c.sipLeft > 0 ? { kind: 'sip' }
+        : c.gestureLeft > 0 ? { kind: 'gesture' }
+        : c.phoneOn ? { kind: 'phone' }
+        : { kind: 'swing' };
+      if (!c.done) fig.render(dt);
     }
     for (let i = people.length - 1; i >= 0; i--) if (people[i].done) people.splice(i, 1);
   };

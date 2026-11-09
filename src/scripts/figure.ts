@@ -39,15 +39,6 @@ function ik(s: V, t: V, l1: number, l2: number): { e: V; w: V } {
   return { e, w: v(s.x + dx, s.y + dy) };
 }
 
-/** One limb segment from a to b, rounded at a so joints read as elbows and knees. */
-function seg(a: V, b: V, wa: number, wb: number) {
-  const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
-  const n = v(-dy / l, dx / l);
-  const P = (p: V, w: number) => `${f(p.x + n.x * w)},${f(p.y + n.y * w)}`;
-  const M = (p: V, w: number) => `${f(p.x - n.x * w)},${f(p.y - n.y * w)}`;
-  return `M${P(a, wa)} L${P(b, wb)} L${M(b, wb)} L${M(a, wa)} A${wa},${wa} 0 0 0 ${P(a, wa)}`;
-}
-
 /**
  * A whole bent limb (upper arm + forearm, or thigh + shin) as one outline: the
  * outside of the joint is rounded, the inside meets at a crease, and there are no
@@ -110,14 +101,46 @@ function across(a: V, b: V, p: V, w: number) {
 }
 const lerpV = (a: V, b: V, t: number) => v(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
 
+// ---------- Motion helpers ----------
+/** Damped spring, used for anything that should lag, swing and settle (hems, bags, hair). */
+class Spring {
+  x = 0;
+  vel = 0;
+  constructor(private k = 60, private c = 8) {}
+  step(target: number, dt: number) {
+    if (dt <= 0) return this.x;
+    const steps = Math.ceil(dt / 0.02);
+    const h = dt / steps;
+    for (let i = 0; i < steps; i++) {
+      this.vel += (this.k * (target - this.x) - this.c * this.vel) * h;
+      this.x += this.vel * h;
+    }
+    return this.x;
+  }
+}
+const approach = (cur: number, target: number, rate: number, dt: number) => cur + (target - cur) * Math.min(1, rate * dt);
+const clamp = (x: number, a: number, b: number) => Math.max(a, Math.min(b, x));
+const deg = (r: number) => (r * 180) / Math.PI;
+
 // ---------- Wardrobe ----------
 export type OutfitName = 'wool' | 'puffer' | 'trench' | 'knit' | 'blazer' | 'dress' | 'barista';
 export type HairName = 'bob' | 'pony' | 'bun' | 'crop' | 'curly' | 'long' | 'beanie' | 'cap';
 export type ShoeName = 'trainer' | 'loafer' | 'ankleboot' | 'boot';
 export type BottomName = 'straight' | 'jeans' | 'wide' | 'tights';
 
+/** The part of a long garment below the waist, redrawn every frame so it can swing. */
+interface Skirt {
+  y0: number; back0: number; front0: number; // at the waist
+  y1: number; back1: number; front1: number; // at the hem
+  lines?: number[]; // solid lines from waist to hem, as fractions back→front
+  faint?: number[]; // faint lines (seams, pleats)
+  pocket?: [number, number, number]; // [down fraction, from, to]
+  buttons?: number[]; // down fractions, on the front edge
+}
+
 interface Outfit {
-  torso: string; // drawn over the legs
+  upper: string; // shoulders to waist (or to the hem for short garments)
+  skirt?: Skirt;
   sleeve: [number, number, number];
   sleeveStyle: 'full' | 'rolled' | 'knit' | 'puffer';
   bottoms: BottomName[];
@@ -126,18 +149,19 @@ interface Outfit {
 
 const OUTFITS: Record<OutfitName, Outfit> = {
   wool: {
-    torso:
-      '<path class="ln o" d="M-4,314 C-15,317 -23,328 -24,350 L-25,430 L-28,540 Q0,545 30,540 L26,430 C28,400 27,360 22,336 C19,324 14,317 8,315 Z"/>' +
+    upper:
+      '<path class="ln o" d="M-4,314 C-15,317 -23,328 -24,350 L-25,444 L27,444 C27,400 27,360 22,336 C19,324 14,317 8,315 Z"/>' +
       '<path class="ln" d="M8,315 L16,338 L11,350 L19,362 M-4,314 Q-9,306 -3,299"/>' +
-      '<circle class="ln" cx="23" cy="392" r="1.6"/><circle class="ln" cx="24" cy="428" r="1.6"/><circle class="ln" cx="25" cy="464" r="1.6"/>' +
-      '<path class="ln" d="M4,478 L22,476"/><path class="ln faint" d="M-26,480 L-28,540 M-2,346 Q-8,420 -6,538"/>',
+      '<circle class="ln" cx="23" cy="392" r="1.6"/><circle class="ln" cx="24" cy="428" r="1.6"/>' +
+      '<path class="ln faint" d="M-2,346 Q-6,400 -5,442"/>',
+    skirt: { y0: 440, back0: -25, front0: 27, y1: 540, back1: -28, front1: 30, faint: [0.42], pocket: [0.36, 0.55, 0.92], buttons: [0.24] },
     sleeve: [8.5, 7.5, 6.8],
     sleeveStyle: 'full',
     bottoms: ['straight', 'wide'],
     shoes: ['loafer', 'ankleboot', 'boot'],
   },
   puffer: {
-    torso:
+    upper:
       '<path class="ln o" d="M-6,312 C-22,316 -31,330 -31,354 L-31,476 Q0,485 33,476 L32,354 C32,330 23,316 10,312 Z"/>' +
       '<path class="ln" d="M-31,352 Q0,359 32,352 M-31,384 Q0,391 32,384 M-31,416 Q0,423 32,416 M-31,448 Q0,455 32,448"/>' +
       '<path class="ln o" d="M-7,313 L-7,298 Q2,293 11,298 L11,313 Z"/><path class="ln faint" d="M31,318 L32,474 M-7,305 L11,305"/>',
@@ -147,19 +171,19 @@ const OUTFITS: Record<OutfitName, Outfit> = {
     shoes: ['trainer'],
   },
   trench: {
-    torso:
-      '<path class="ln o" d="M-4,314 C-15,317 -22,328 -23,350 L-24,425 L-31,528 Q0,534 33,528 L25,425 C27,395 26,358 21,336 C18,324 14,317 8,315 Z"/>' +
-      '<path class="ln" d="M8,315 L22,346 L18,351 M-23,423 Q0,428 25,423 M-23,430 Q0,435 25,430 M-11,320 L4,317"/>' +
-      '<path class="ln o" d="M12,421 L19,421 L19,433 L12,433 Z"/>' +
+    upper:
+      '<path class="ln o" d="M-4,314 C-15,317 -22,328 -23,350 L-24,434 L25,434 C27,395 26,358 21,336 C18,324 14,317 8,315 Z"/>' +
+      '<path class="ln" d="M8,315 L22,346 L18,351 M-11,320 L4,317"/>' +
       '<circle class="ln" cx="20" cy="372" r="1.5"/><circle class="ln" cx="13" cy="374" r="1.5"/><circle class="ln" cx="21" cy="400" r="1.5"/><circle class="ln" cx="14" cy="402" r="1.5"/>' +
-      '<path class="ln faint" d="M-24,440 L-31,528 M4,440 Q2,490 0,530 M-2,460 L-6,470"/>',
+      '<path class="ln o" d="M-24,422 L26,422 L26,436 L-24,436 Z"/><path class="ln o" d="M12,420 L19,420 L19,437 L12,437 Z"/><path class="ln" d="M15.5,424 L15.5,433"/>',
+    skirt: { y0: 437, back0: -24, front0: 26, y1: 528, back1: -31, front1: 33, lines: [0.66], faint: [0.1] },
     sleeve: [8, 7, 6.2],
     sleeveStyle: 'full',
     bottoms: ['straight', 'tights'],
     shoes: ['ankleboot', 'loafer'],
   },
   knit: {
-    torso:
+    upper:
       '<path class="ln o" d="M-4,316 C-15,318 -21,330 -21,350 L-21,468 Q0,472 22,468 L21,352 C21,334 15,320 8,316 Z"/>' +
       '<path class="ln" d="M-4,316 Q2,322 8,316 M-21,459 Q0,463 22,459"/>' +
       '<path class="ln faint" d="M-17,460 L-17,468 M-12,461 L-12,469 M-7,462 L-7,470 M-2,462 L-2,470 M3,462 L3,470 M8,462 L8,470 M13,461 L13,469 M18,460 L18,468"/>' +
@@ -170,7 +194,7 @@ const OUTFITS: Record<OutfitName, Outfit> = {
     shoes: ['trainer', 'loafer'],
   },
   blazer: {
-    torso:
+    upper:
       '<path class="ln o" d="M-4,314 C-14,317 -20,328 -20,348 L-20,488 L23,486 L22,350 C22,332 15,319 8,315 Z"/>' +
       '<path class="ln" d="M8,315 L11,305 M8,315 L15,340 L12,344 L19,352 L15,410"/>' +
       '<circle class="ln" cx="17" cy="422" r="1.6"/><path class="ln" d="M3,452 L19,451 M-6,360 L4,359"/>' +
@@ -181,18 +205,17 @@ const OUTFITS: Record<OutfitName, Outfit> = {
     shoes: ['ankleboot', 'loafer'],
   },
   dress: {
-    torso:
-      '<path class="ln o" d="M-17,428 L-31,550 Q0,557 33,550 L18,428 Z"/>' +
-      '<path class="ln faint" d="M-8,432 L-15,552 M2,432 L1,555 M11,431 L18,553 M-14,440 Q0,444 17,440"/>' +
+    upper:
       '<path class="ln o" d="M-4,316 C-14,318 -19,330 -19,350 L-17,432 Q0,436 18,432 L19,352 C19,334 14,320 8,316 Z"/>' +
       '<path class="ln" d="M-4,316 Q3,324 8,316"/><path class="ln faint" d="M-17,424 Q0,428 18,424"/>',
+    skirt: { y0: 428, back0: -17, front0: 18, y1: 550, back1: -31, front1: 33, faint: [0.2, 0.4, 0.6, 0.8] },
     sleeve: [6.5, 5.8, 5],
     sleeveStyle: 'full',
     bottoms: ['tights'],
     shoes: ['boot', 'ankleboot'],
   },
   barista: {
-    torso:
+    upper:
       '<path class="ln o" d="M-4,316 C-15,318 -21,330 -21,350 L-21,480 L22,480 L21,352 C21,334 15,320 8,316 Z"/>' +
       '<path class="ln" d="M8,316 L12,306 M-4,316 L-8,307"/>' +
       '<path class="ln o" d="M12,334 L25,338 L28,482 L13,482 Z"/>' +
@@ -234,33 +257,39 @@ const HEAD =
   '<path class="ln faint" d="M11,277 q3,-1.5 6,0 M12,282 l3,0"/>';
 const NECK = '<path class="ln o" d="M-2,298 L-4,320 L11,320 L10,301 Z"/>';
 
-const HAIR: Record<HairName, string> = {
-  bob: '<path class="ln o" d="M-14,296 C-17,276 -9,261 4,260 C14,260 19,267 19,276 C14,271 8,271 4,274 C2,284 -1,292 -4,300 C-7,303 -12,302 -14,296 Z"/><path class="ln faint" d="M-9,268 Q-11,282 -10,298 M-3,264 Q-6,280 -6,296"/>',
-  pony: '<path class="ln o" d="M-12,286 C-13,270 -4,261 5,261 C13,261 18,267 18,275 C12,271 4,272 -2,278 Z"/><path class="ln o" d="M-11,276 C-22,278 -27,294 -22,312 C-20,300 -16,290 -9,284 Z"/><path class="ln" d="M-12,276 l3,6"/>',
-  bun: '<circle class="ln o" cx="-10" cy="265" r="7.5"/><path class="ln o" d="M-12,286 C-13,270 -4,261 5,261 C13,261 18,267 18,275 C12,272 4,273 -3,279 Z"/><path class="ln faint" d="M-14,263 q4,4 8,0 M-4,266 Q-8,274 -10,282"/>',
-  crop: '<path class="ln o" d="M-12,289 C-14,272 -6,261 4,261 C13,261 18,267 17,275 C13,272 9,272 6,275 C2,276 -4,280 -7,290 Z"/><path class="ln faint" d="M-6,268 l4,-3 M0,266 l4,-3"/>',
-  curly: '<path class="ln o" d="M-15,292 q-5,-7 0,-12 q-3,-9 6,-12 q4,-8 13,-5 q8,-2 11,6 q6,3 3,10 q-6,-3 -12,0 q-6,3 -9,11 q-5,4 -12,2 Z"/><path class="ln faint" d="M-8,276 q3,-2 4,2 M0,268 q3,-2 4,2"/>',
-  long: '<path class="ln o" d="M-12,286 C-13,270 -4,261 5,261 C13,261 18,267 18,275 C12,272 4,274 -2,280 C-3,300 -4,322 -6,344 C-13,342 -17,322 -17,300 Z"/><path class="ln faint" d="M-10,290 Q-12,316 -12,338 M-6,286 Q-7,312 -8,340"/>',
-  beanie: '<path class="ln o" d="M-14,284 C-15,264 -5,255 5,255 C15,255 20,264 19,278 Z"/><path class="ln o" d="M-15,284 Q2,276 20,279 L20,272 Q2,269 -15,277 Z"/><path class="ln faint" d="M-8,262 L-9,276 M-1,258 L-2,274 M6,257 L6,272 M13,259 L14,272"/>',
-  cap: '<path class="ln o" d="M-11,282 C-12,266 -4,259 5,259 C12,259 16,265 16,276 Z"/><path class="ln o" d="M14,273 L31,276 Q30,281 15,279 Z"/><path class="ln faint" d="M3,259 L5,276 M-12,284 q-2,6 1,10"/>',
+// Hair: static part, plus an optional part that swings from a pivot.
+const HAIR: Record<HairName, { fixed: string; swing?: { markup: string; pivot: V } }> = {
+  bob: { fixed: '<path class="ln o" d="M-14,296 C-17,276 -9,261 4,260 C14,260 19,267 19,276 C14,271 8,271 4,274 C2,284 -1,292 -4,300 C-7,303 -12,302 -14,296 Z"/><path class="ln faint" d="M-9,268 Q-11,282 -10,298 M-3,264 Q-6,280 -6,296"/>' },
+  pony: {
+    fixed: '<path class="ln o" d="M-12,286 C-13,270 -4,261 5,261 C13,261 18,267 18,275 C12,271 4,272 -2,278 Z"/><path class="ln" d="M-12,276 l3,6"/>',
+    swing: { markup: '<path class="ln o" d="M-11,276 C-22,278 -27,294 -22,312 C-20,300 -16,290 -9,284 Z"/><path class="ln faint" d="M-14,282 Q-20,292 -21,304"/>', pivot: v(-11, 279) },
+  },
+  bun: { fixed: '<circle class="ln o" cx="-10" cy="265" r="7.5"/><path class="ln o" d="M-12,286 C-13,270 -4,261 5,261 C13,261 18,267 18,275 C12,272 4,273 -3,279 Z"/><path class="ln faint" d="M-14,263 q4,4 8,0 M-4,266 Q-8,274 -10,282"/>' },
+  crop: { fixed: '<path class="ln o" d="M-12,289 C-14,272 -6,261 4,261 C13,261 18,267 17,275 C13,272 9,272 6,275 C2,276 -4,280 -7,290 Z"/><path class="ln faint" d="M-6,268 l4,-3 M0,266 l4,-3"/>' },
+  curly: { fixed: '<path class="ln o" d="M-15,292 q-5,-7 0,-12 q-3,-9 6,-12 q4,-8 13,-5 q8,-2 11,6 q6,3 3,10 q-6,-3 -12,0 q-6,3 -9,11 q-5,4 -12,2 Z"/><path class="ln faint" d="M-8,276 q3,-2 4,2 M0,268 q3,-2 4,2"/>' },
+  long: {
+    fixed: '<path class="ln o" d="M-12,286 C-13,270 -4,261 5,261 C13,261 18,267 18,275 C12,272 4,274 -2,280 L-3,290 L-14,292 Z"/>',
+    swing: { markup: '<path class="ln o" d="M-14,286 C-17,300 -17,322 -12,344 C-8,344 -5,343 -3,342 C-3,322 -3,300 -2,282 Z"/><path class="ln faint" d="M-10,292 Q-12,316 -10,338 M-6,290 Q-7,314 -6,340"/>', pivot: v(-8, 284) },
+  },
+  beanie: { fixed: '<path class="ln o" d="M-14,284 C-15,264 -5,255 5,255 C15,255 20,264 19,278 Z"/><path class="ln o" d="M-15,284 Q2,276 20,279 L20,272 Q2,269 -15,277 Z"/><path class="ln faint" d="M-8,262 L-9,276 M-1,258 L-2,274 M6,257 L6,272 M13,259 L14,272"/>' },
+  cap: { fixed: '<path class="ln o" d="M-11,282 C-12,266 -4,259 5,259 C12,259 16,265 16,276 Z"/><path class="ln o" d="M14,273 L31,276 Q30,281 15,279 Z"/><path class="ln faint" d="M3,259 L5,276 M-12,284 q-2,6 1,10"/>' },
 };
 
 const EXTRAS = {
   glasses: '<path class="ln o" d="M10,279 L19,279 L19,285 L10,285 Z"/><path class="ln" d="M10,281 L-1,283"/>',
-  scarf:
-    '<path class="ln o" d="M-7,308 C-3,320 12,320 15,308 L16,320 C9,328 -3,328 -8,320 Z"/>' +
-    '<path class="ln o" d="M10,320 L13,366 L22,365 L17,319 Z"/><path class="ln faint" d="M14,366 l0,5 M17,366 l0,5 M20,365 l0,5"/>',
+  scarfWrap: '<path class="ln o" d="M-7,308 C-3,320 12,320 15,308 L16,320 C9,328 -3,328 -8,320 Z"/>',
+  scarfTail: '<path class="ln o" d="M10,320 L13,366 L22,365 L17,319 Z"/><path class="ln faint" d="M14,366 l0,5 M17,366 l0,5 M20,365 l0,5"/>',
   earring: '<circle class="ln" cx="-1" cy="297" r="1.4"/>',
   tote:
     '<path class="ln" d="M-2,322 L-27,418 M4,322 L-12,418"/>' +
     '<path class="ln o" d="M-42,412 L-6,412 L-3,480 L-45,480 Z"/>' +
     '<text class="cup-text" x="-24" y="446" font-size="6">THE</text><text class="cup-text" x="-24" y="454" font-size="6">MESS</text>',
-  crossbody:
-    '<path class="ln" d="M-8,320 L22,436"/><path class="ln o" d="M14,434 L33,434 L33,452 L14,452 Z"/><path class="ln" d="M14,434 L33,434 L31,443 L16,443 Z"/>',
+  crossbody: '<path class="ln o" d="M14,434 L33,434 L33,452 L14,452 Z"/><path class="ln" d="M14,434 L33,434 L31,443 L16,443 Z"/>',
 };
-export type Extra = keyof typeof EXTRAS;
+export type Extra = 'glasses' | 'scarf' | 'earring' | 'tote' | 'crossbody';
 
 const HAND = '<path class="ln o" d="M-4,-1 C-5,5 -4,10 -1,12 C2,13 5,10 5,5 L4,-1 Z"/><path class="ln" d="M4,3 q3,2 2,6"/>';
+const PHONE = '<path class="ln o" d="M-4,-1 L4,-1 L4,15 L-4,15 Z"/><path class="ln faint" d="M-2,1 L2,1"/>';
 
 export interface Look {
   outfit: OutfitName;
@@ -284,7 +313,7 @@ export function randomLook(): Look {
   else if (bag < 0.36) extras.push('crossbody');
   return {
     outfit,
-    hair: pick<HairName>(['bob', 'pony', 'bun', 'crop', 'curly', 'long', 'beanie', 'cap', 'crop']),
+    hair: pick<HairName>(['bob', 'pony', 'bun', 'crop', 'curly', 'long', 'beanie', 'cap', 'crop', 'pony']),
     bottom: pick(o.bottoms),
     shoe: pick(o.shoes),
     extras,
@@ -295,188 +324,327 @@ export function randomLook(): Look {
 
 // ---------- Figure ----------
 export type ArmMode =
-  | { kind: 'swing' } // walking or standing, arms by their sides
+  | { kind: 'swing' } // arms by the sides (swinging when walking)
   | { kind: 'target'; near: V; far?: V } // hands placed on points (local coords)
   | { kind: 'hold' } // holding a cup in front
-  | { kind: 'sip' };
+  | { kind: 'sip' }
+  | { kind: 'phone' } // looking at a phone
+  | { kind: 'gesture' }; // talking with the hands
 
 export class Figure {
   x = 0;
   y = 0; // extra vertical offset (seated people sit lower)
-  dir: 1 | -1 = 1;
-  phase = rand(0, Math.PI * 2);
-  walking = false;
+  dir: 1 | -1 = 1; // the way they want to face; they turn toward it
+  speed = 0; // current walking speed, svg units / s
+  accel = 0;
   seated = false;
   arms: ArmMode = { kind: 'swing' };
   hasCup = false;
+  nod = 0; // extra head nod (ordering, chatting)
+  gaze = 0; // where they're looking: + down, - up (degrees)
   look: Look;
-
-  g: SVGGElement;
-  private farArm: SVGPathElement;
-  private farFore: SVGPathElement;
-  private nearFore: SVGPathElement;
-  private farHand: SVGGElement;
-  private nearArm: SVGPathElement;
-  private nearHand: SVGGElement;
-  private nearCuff: SVGPathElement;
-  private legs: { thigh: SVGPathElement; shin: SVGPathElement; hem: SVGPathElement; shoe: SVGGElement }[];
-  private cupG: SVGGElement;
-  private headG: SVGGElement;
-  nod = 0;
   /** Where the near hand ended up last frame, in world coordinates. */
   handWorld: V = v(0, 0);
+
+  phase = rand(0, Math.PI * 2);
+  private t = rand(0, 100);
+  private seed = rand(0, 10);
+  private facing = 1;
+  private blend = 0; // 0 standing … 1 full stride
+  private bob = 0;
+  private gazeNow = 0;
+  private hem = new Spring(70, 7);
+  private bagSwing = new Spring(38, 3.6);
+  private hairSwing = new Spring(55, 4.5);
+  private scarfSwing = new Spring(46, 4);
+  private armSmooth = { nx: 0, ny: 0, fx: 0, fy: 0, init: false };
+
+  g: SVGGElement;
+  private q: Record<string, SVGElement> = {};
+  private legs: { path: SVGPathElement; hem: SVGPathElement; crease: SVGPathElement; shoe: SVGGElement }[];
 
   constructor(parent: SVGGElement, look: Look = randomLook()) {
     this.look = look;
     const o = OUTFITS[look.outfit];
-    const legMarkup = () =>
-      `<g data-leg><path class="ln o" d=""/><path class="ln o" d=""/><path class="ln faint" d=""/><g>${SHOES[look.shoe]}</g></g>`;
+    const has = (e: Extra) => look.extras.includes(e);
+    const hair = HAIR[look.hair];
+    const leg = () =>
+      `<g data-leg><path class="ln o" d=""/><path class="ln faint" d=""/><path class="ln faint" d=""/><g>${SHOES[look.shoe]}</g></g>`;
     this.g = document.createElementNS(NS, 'g');
     this.g.innerHTML =
-      `<path class="ln o" data-fararm d=""/><path class="ln o" data-farfore d=""/><g data-farhand>${HAND}</g>` +
-      legMarkup() + legMarkup() +
-      o.torso +
-      (look.extras.includes('tote') ? EXTRAS.tote : '') +
-      `<g data-head>${NECK}${HEAD}${HAIR[look.hair]}` +
-      (look.extras.includes('glasses') ? EXTRAS.glasses : '') +
-      (look.extras.includes('earring') && !['beanie', 'long', 'bob'].includes(look.hair) ? EXTRAS.earring : '') +
+      // far arm, behind everything
+      `<g data-lean1><path class="ln o" data-k="farArm" d=""/><g data-k="farHand">${HAND}</g></g>` +
+      leg() + leg() +
+      `<g data-lean2>` +
+      (hair.swing && look.hair === 'long' ? `<g data-k="hairSwing">${hair.swing.markup}</g>` : '') +
+      o.upper +
+      (o.skirt ? '<g data-k="skirt"><path class="ln o" d=""/><path class="ln" d=""/><path class="ln faint" d=""/></g>' : '') +
+      (has('tote') ? `<g data-k="tote">${EXTRAS.tote}</g>` : '') +
+      `<g data-k="head">${NECK}` +
+      (hair.swing && look.hair !== 'long' ? `<g data-k="hairSwing">${hair.swing.markup}</g>` : '') +
+      `${HEAD}${hair.fixed}` +
+      (has('glasses') ? EXTRAS.glasses : '') +
+      (has('earring') && !['beanie', 'long', 'bob'].includes(look.hair) ? EXTRAS.earring : '') +
       `</g>` +
-      (look.extras.includes('scarf') ? EXTRAS.scarf : '') +
-      (look.extras.includes('crossbody') ? EXTRAS.crossbody : '') +
-      `<g data-cup>${cupMarkup(0, 0)}</g>` +
-      `<path class="ln o" data-neararm d=""/><path class="ln o" data-nearfore d=""/><path class="ln" data-nearcuff d=""/><g data-nearhand>${HAND}</g>`;
-    const q = <T extends Element>(s: string) => this.g.querySelector(s) as unknown as T;
-    this.farArm = q('[data-fararm]');
-    this.farFore = q('[data-farfore]');
-    this.nearFore = q('[data-nearfore]');
-    this.farHand = q('[data-farhand]');
-    this.nearArm = q('[data-neararm]');
-    this.nearCuff = q('[data-nearcuff]');
-    this.nearHand = q('[data-nearhand]');
-    this.cupG = q('[data-cup]');
-    this.headG = q('[data-head]');
+      (has('scarf') ? `${EXTRAS.scarfWrap}<g data-k="scarfTail">${EXTRAS.scarfTail}</g>` : '') +
+      (has('crossbody') ? `<path class="ln" data-k="strap" d="M-8,320 L22,436"/><g data-k="crossbody">${EXTRAS.crossbody}</g>` : '') +
+      `</g>` +
+      `<g data-lean3>` +
+      `<g data-k="cup">${cupMarkup(0, 0)}</g><g data-k="phone">${PHONE}</g>` +
+      `<path class="ln o" data-k="nearArm" d=""/><path class="ln" data-k="cuff" d=""/><path class="ln faint" data-k="folds" d=""/>` +
+      `<g data-k="nearHand">${HAND}</g>` +
+      `</g>`;
+    this.g.querySelectorAll('[data-k]').forEach((el) => (this.q[(el as HTMLElement).dataset.k!] = el as SVGElement));
+    ['lean1', 'lean2', 'lean3'].forEach((k) => (this.q[k] = this.g.querySelector(`[data-${k}]`) as SVGElement));
     this.legs = Array.from(this.g.querySelectorAll('[data-leg]')).map((el) => ({
-      thigh: el.children[0] as SVGPathElement,
-      shin: el.children[1] as SVGPathElement,
-      hem: el.children[2] as SVGPathElement,
+      path: el.children[0] as SVGPathElement,
+      hem: el.children[1] as SVGPathElement,
+      crease: el.children[2] as SVGPathElement,
       shoe: el.children[3] as SVGGElement,
     }));
+    this.facing = this.dir;
     parent.appendChild(this.g);
+  }
+
+  /** Snap facing (for figures placed already facing a way). */
+  face(d: 1 | -1) {
+    this.dir = d;
+    this.facing = d;
+  }
+
+  private get scaleX() {
+    const f0 = Math.abs(this.facing) < 0.08 ? 0.08 * Math.sign(this.facing || 1) : this.facing;
+    return f0 * this.look.height * this.look.build;
   }
 
   /** Convert a world point into this figure's local (unmirrored) coordinates. */
   toLocal(p: V): V {
-    const { height: s, build: b } = this.look;
-    return v((p.x - this.x) / (this.dir * s * b), (p.y - 600 - this.y - this.bob) / s + 600);
+    return v((p.x - this.x) / this.scaleX, (p.y - 600 - this.y - this.bob) / this.look.height + 600);
   }
   private toWorld(p: V): V {
-    const { height: s, build: b } = this.look;
-    return v(this.x + p.x * this.dir * s * b, (p.y - 600) * s + 600 + this.y + this.bob);
+    return v(this.x + p.x * this.scaleX, (p.y - 600) * this.look.height + 600 + this.y + this.bob);
   }
 
-  private bob = 0;
-
-  render() {
+  render(dt: number) {
     const o = OUTFITS[this.look.outfit];
+    const { height: s, build: b } = this.look;
+    this.t += dt;
+    const t = this.t;
+
+    // Turning: face toward dir over ~0.2s (the figure narrows as they turn)
+    if (this.facing !== this.dir) {
+      const step = dt * 9;
+      this.facing = Math.abs(this.dir - this.facing) <= step ? this.dir : this.facing + Math.sign(this.dir - this.facing) * step;
+    }
+
+    // Gait: stride length follows speed so feet stay planted
+    const targetBlend = this.seated ? 0 : clamp(this.speed / 85, 0, 1);
+    this.blend = approach(this.blend, targetBlend, 7, dt);
+    const bl = this.blend;
+    const stepLen = 84 * Math.max(0.4, bl);
+    this.phase += (Math.PI * this.speed * dt) / stepLen;
     const ph = this.phase;
     const stride = 0.36;
 
-    // Legs
-    const legAngles = (p: number) => {
-      if (this.seated) return { t: 1.38, k: 1.38, foot: 0 };
-      if (!this.walking) return { t: 0.04, k: 0.03, foot: 0 };
-      const t = stride * Math.sin(p);
+    const walkLeg = (p: number) => {
       const swing = Math.max(0, Math.cos(p));
-      const k = 0.52 * Math.pow(swing, 1.4);
-      const foot = -6 * swing + (Math.cos(p) <= 0 ? 10 * Math.max(0, -Math.sin(p)) : 0);
-      return { t, k, foot };
+      return {
+        t: stride * Math.sin(p),
+        k: 0.52 * Math.pow(swing, 1.4) + 0.06,
+        foot: -6 * swing + (Math.cos(p) <= 0 ? 10 * Math.max(0, -Math.sin(p)) : 0),
+      };
     };
-    const near = legAngles(ph);
-    const far = this.seated ? { t: 1.3, k: 1.42, foot: 0 } : this.walking ? legAngles(ph + Math.PI) : { t: -0.05, k: 0.02, foot: 0 };
-    this.bob = this.walking ? THIGH * 2 * (1 - Math.cos(stride * Math.abs(Math.sin(ph)))) * 0.85 : 0;
+    // Standing: weight shifts slowly from foot to foot
+    const shift = Math.sin(t * 0.55 + this.seed);
+    const standNear = { t: 0.035 + 0.03 * shift, k: 0.03 + 0.02 * Math.max(0, -shift), foot: 0 };
+    const standFar = { t: -0.035 + 0.02 * shift, k: 0.03 + 0.03 * Math.max(0, shift), foot: 0 };
+    const mix = (a: { t: number; k: number; foot: number }, w: { t: number; k: number; foot: number }) => ({
+      t: a.t + (w.t - a.t) * bl, k: a.k + (w.k - a.k) * bl, foot: a.foot + (w.foot - a.foot) * bl,
+    });
+    const near = this.seated ? { t: 1.38, k: 1.38, foot: 0 } : mix(standNear, walkLeg(ph));
+    const far = this.seated ? { t: 1.3, k: 1.42, foot: 0 } : mix(standFar, walkLeg(ph + Math.PI));
+    // Body dips at double support, rises over the planted leg
+    this.bob = bl * (THIGH + SHIN) * (1 - Math.cos(stride * Math.abs(Math.sin(ph)))) * 0.85;
 
-    const { height: s, build: b } = this.look;
     this.g.setAttribute(
       'transform',
-      `translate(${f(this.x)} ${f(600 + this.y + this.bob)}) scale(${(this.dir * s * b).toFixed(3)} ${s.toFixed(3)}) translate(0 -600)`,
+      `translate(${f(this.x)} ${f(600 + this.y + this.bob)}) scale(${this.scaleX.toFixed(3)} ${s.toFixed(3)}) translate(0 -600)`,
     );
 
+    // Lean into the walk, a touch more when speeding up; breathe when still
+    const lean = this.seated ? 0 : bl * 3.2 + clamp(this.accel * 0.006, -2.5, 2.5);
+    const breath = 1 + 0.006 * Math.sin(t * 1.6 + this.seed);
+    const leanT = `rotate(${f(lean)} 0 470) translate(0 470) scale(1 ${breath.toFixed(4)}) translate(0 -470)`;
+    this.q.lean1.setAttribute('transform', leanT);
+    this.q.lean2.setAttribute('transform', leanT);
+    this.q.lean3.setAttribute('transform', leanT);
+
+    // Legs
     const lw = BOTTOMS[this.look.bottom];
+    let kneeMax = -99, kneeMin = 99;
     [far, near].forEach((a, i) => {
       const knee = fk(HIP, THIGH, a.t);
       const ankle = fk(knee, SHIN, a.t - a.k);
+      kneeMax = Math.max(kneeMax, knee.x + lw[1]);
+      kneeMin = Math.min(kneeMin, knee.x - lw[1]);
       const L = this.legs[i];
-      L.thigh.setAttribute('d', limb2(HIP, knee, ankle, lw[0], lw[1], lw[1], lw[2]));
-      L.shin.setAttribute('d', '');
+      L.path.setAttribute('d', limb2(HIP, knee, ankle, lw[0], lw[1], lw[1], lw[2]));
       L.hem.setAttribute(
         'd',
         this.look.bottom === 'jeans'
           ? across(knee, ankle, lerpV(knee, ankle, 0.86), lw[2]) + ' ' + across(knee, ankle, lerpV(knee, ankle, 0.93), lw[2])
           : this.look.bottom === 'tights' ? '' : across(knee, ankle, lerpV(knee, ankle, 0.97), lw[2]),
       );
+      L.crease.setAttribute('d', this.look.bottom === 'tights' ? '' : folds(HIP, knee, ankle, a.k, lw[1]));
       L.shoe.setAttribute('transform', `translate(${f(ankle.x)} ${f(ankle.y)}) rotate(${f(a.foot)})`);
     });
 
+    // Long garments swing: the hem trails the walk, kicks with each stride and
+    // gets pushed out by the knees, then settles when they stop.
+    if (o.skirt) {
+      const sk = o.skirt;
+      const sway = this.hem.step(-this.speed * 0.04 + 4 * Math.sin(ph) * bl - this.accel * 0.01, dt);
+      const flare = 2.6 * bl * Math.abs(Math.sin(ph));
+      const back1 = Math.min(sk.back1 + sway - flare, kneeMin - 3);
+      const front1 = Math.max(sk.front1 + sway + flare, kneeMax + 3);
+      const midX = (back1 + front1) / 2 + sway * 0.3;
+      const cb = v((sk.back0 + back1) / 2 + sway * 0.25, (sk.y0 + sk.y1) / 2);
+      const cf = v((sk.front0 + front1) / 2 + sway * 0.25, (sk.y0 + sk.y1) / 2);
+      const kids = this.q.skirt.children;
+      kids[0].setAttribute(
+        'd',
+        `M${f(sk.back0)},${sk.y0} Q${f(cb.x)},${f(cb.y)} ${f(back1)},${sk.y1} Q${f(midX)},${sk.y1 + 6} ${f(front1)},${sk.y1} Q${f(cf.x)},${f(cf.y)} ${f(sk.front0)},${sk.y0}`, // open top: joins the jacket with no seam
+      );
+      const line = (fr: number) => {
+        const x0 = sk.back0 + (sk.front0 - sk.back0) * fr;
+        const x1 = back1 + (front1 - back1) * fr;
+        const yb = sk.y1 + 6 * (1 - Math.pow(2 * fr - 1, 2)) * 0.75;
+        return `M${f(x0)},${sk.y0} Q${f((x0 + x1) / 2 + sway * 0.25)},${f((sk.y0 + sk.y1) / 2)} ${f(x1)},${f(yb)}`;
+      };
+      let solid = (sk.lines ?? []).map(line).join(' ');
+      if (sk.pocket) {
+        const [d0, a0, a1] = sk.pocket;
+        const y = sk.y0 + (sk.y1 - sk.y0) * d0;
+        const bx = sk.back0 + (back1 - sk.back0) * d0, fx = sk.front0 + (front1 - sk.front0) * d0;
+        solid += ` M${f(bx + (fx - bx) * a0)},${f(y)} L${f(bx + (fx - bx) * a1)},${f(y - 1)}`;
+      }
+      for (const d0 of sk.buttons ?? []) {
+        const y = sk.y0 + (sk.y1 - sk.y0) * d0;
+        const fx = sk.front0 + (front1 - sk.front0) * d0 - 4;
+        solid += ` M${f(fx + 1.6)},${f(y)} A1.6,1.6 0 1 0 ${f(fx - 1.6)},${f(y)} A1.6,1.6 0 1 0 ${f(fx + 1.6)},${f(y)}`;
+      }
+      kids[1].setAttribute('d', solid);
+      kids[2].setAttribute('d', (sk.faint ?? []).map(line).join(' '));
+    }
+
+    // Bags, hair and scarf ends swing from their pivots
+    const fwd = this.speed;
+    if (this.q.tote) {
+      const a = this.bagSwing.step(fwd * 0.05 + 5 * Math.sin(2 * ph) * bl, dt);
+      this.q.tote.setAttribute('transform', `rotate(${f(a)} -2 322)`);
+    }
+    if (this.q.crossbody) {
+      const a = this.bagSwing.step(fwd * 0.03 + 3 * Math.sin(2 * ph) * bl, dt);
+      this.q.crossbody.setAttribute('transform', `rotate(${f(a)} 22 436)`);
+    }
+    if (this.q.hairSwing) {
+      const hs = HAIR[this.look.hair].swing!;
+      const a = this.hairSwing.step(fwd * (this.look.hair === 'long' ? 0.05 : 0.09) + 7 * Math.sin(2 * ph) * bl, dt);
+      this.q.hairSwing.setAttribute('transform', `rotate(${f(a)} ${hs.pivot.x} ${hs.pivot.y})`);
+    }
+    if (this.q.scarfTail) {
+      const a = this.scarfSwing.step(fwd * 0.08 + 4 * Math.sin(ph) * bl, dt);
+      this.q.scarfTail.setAttribute('transform', `rotate(${f(a)} 14 320)`);
+    }
+
     // Arms
     const [sw0, sw1, sw2] = o.sleeve;
-    let nearE: V, nearW: V, farE: V, farW: V;
-    const swingA = this.walking ? -0.32 * Math.sin(ph) : 0.04;
-    const bend = this.walking ? 0.28 + 0.16 * Math.max(0, -Math.sin(ph)) : 0.14;
     const swingArm = (a: number, k: number) => {
       const e = fk(SHOULDER, UPPER_ARM, a);
       return { e, w: fk(e, FOREARM, a + k) };
     };
-    const farSwing = swingArm(this.walking ? 0.32 * Math.sin(ph) : -0.03, this.walking ? 0.28 + 0.16 * Math.max(0, Math.sin(ph)) : 0.12);
-    ({ e: farE, w: farW } = farSwing);
+    // Arms swing opposite the legs, forearms lagging a little behind
+    const swingAmp = 0.34 * bl;
+    const farSwing = swingArm(swingAmp * Math.sin(ph) - 0.02, 0.14 + 0.2 * bl + 0.14 * bl * Math.max(0, Math.sin(ph - 0.5)));
+    let farE = farSwing.e, farW = farSwing.w;
+    let nearE: V = SHOULDER, nearW: V = SHOULDER;
 
-    const holdT = v(30 + (this.walking ? 2 * Math.sin(ph * 2) : 0), 384);
-    const sipT = v(23, 322);
+    const holdT = v(30 + 1.5 * Math.sin(ph * 2) * bl, 384);
+    const relax = Math.sin(t * 0.7 + this.seed) * 0.03;
+    let nearTarget: V | null = null;
     switch (this.arms.kind) {
       case 'swing':
-        ({ e: nearE, w: nearW } = this.hasCup ? ik(SHOULDER, holdT, UPPER_ARM, FOREARM) : swingArm(swingA, bend));
+        if (this.hasCup) nearTarget = holdT;
+        else ({ e: nearE, w: nearW } = swingArm(-swingAmp * Math.sin(ph) + 0.04 + relax, 0.14 + 0.2 * bl + 0.14 * bl * Math.max(0, -Math.sin(ph - 0.5))));
         break;
       case 'hold':
-        ({ e: nearE, w: nearW } = ik(SHOULDER, holdT, UPPER_ARM, FOREARM));
+        nearTarget = holdT;
         break;
       case 'sip':
-        ({ e: nearE, w: nearW } = ik(SHOULDER, sipT, UPPER_ARM, FOREARM));
+        nearTarget = v(23, 322);
+        break;
+      case 'phone':
+        nearTarget = v(27, 366);
+        break;
+      case 'gesture':
+        nearTarget = v(34 + 7 * Math.sin(t * 3.1 + this.seed), 372 + 6 * Math.sin(t * 4.3));
         break;
       case 'target':
-        ({ e: nearE, w: nearW } = ik(SHOULDER, this.arms.near, UPPER_ARM, FOREARM));
+        nearTarget = this.arms.near;
         if (this.arms.far) ({ e: farE, w: farW } = ik(SHOULDER, this.arms.far, UPPER_ARM, FOREARM));
         break;
     }
+    if (nearTarget) {
+      // Hands move toward their target rather than jumping there
+      const A = this.armSmooth;
+      if (!A.init) { A.nx = nearTarget.x; A.ny = nearTarget.y; A.init = true; }
+      A.nx = approach(A.nx, nearTarget.x, 16, dt || 1);
+      A.ny = approach(A.ny, nearTarget.y, 16, dt || 1);
+      ({ e: nearE, w: nearW } = ik(SHOULDER, v(A.nx, A.ny), UPPER_ARM, FOREARM));
+    } else {
+      this.armSmooth.nx = nearW.x;
+      this.armSmooth.ny = nearW.y;
+      this.armSmooth.init = true;
+    }
 
     const rolled = o.sleeveStyle === 'rolled';
-    // Rolled sleeves: the sleeve stops at the elbow and a bare forearm continues.
     const armD = (e: V, w: V) => (rolled ? limb2(SHOULDER, e, w, sw0, sw1, 4.6, 3.6) : limb2(SHOULDER, e, w, sw0, sw1, sw1, sw2));
-    this.farArm.setAttribute('d', armD(farE, farW));
-    this.farFore.setAttribute('d', '');
-    this.nearArm.setAttribute('d', armD(nearE, nearW));
-    this.nearFore.setAttribute('d', '');
+    this.q.farArm.setAttribute('d', armD(farE, farW));
+    this.q.nearArm.setAttribute('d', armD(nearE, nearW));
     const cuffAt = rolled ? lerpV(SHOULDER, nearE, 0.86) : lerpV(nearE, nearW, 0.9);
-    const cuffW = rolled ? sw1 : sw2;
-    let cuff = rolled ? across(SHOULDER, nearE, cuffAt, cuffW) : across(nearE, nearW, cuffAt, cuffW);
+    let cuff = rolled ? across(SHOULDER, nearE, cuffAt, sw1) : across(nearE, nearW, cuffAt, sw2);
     if (o.sleeveStyle === 'knit') cuff += ' ' + across(nearE, nearW, lerpV(nearE, nearW, 0.82), sw2);
     if (o.sleeveStyle === 'puffer') cuff += ' ' + across(SHOULDER, nearE, lerpV(SHOULDER, nearE, 0.5), sw0) + ' ' + across(nearE, nearW, lerpV(nearE, nearW, 0.45), sw1);
-    if (rolled) cuff += ' ' + across(SHOULDER, nearE, lerpV(SHOULDER, nearE, 0.74), cuffW);
-    this.nearCuff.setAttribute('d', cuff);
+    if (rolled) cuff += ' ' + across(SHOULDER, nearE, lerpV(SHOULDER, nearE, 0.74), sw1);
+    this.q.cuff.setAttribute('d', cuff);
+    // Fabric bunches at the inside of a bent elbow
+    const elbowBend = Math.PI - angleAt(SHOULDER, nearE, nearW);
+    this.q.folds.setAttribute('d', rolled ? '' : folds(SHOULDER, nearE, nearW, elbowBend, sw1));
 
-    const handRot = (e: V, w: V) => (-Math.atan2(w.x - e.x, w.y - e.y) * 180) / Math.PI;
-    this.nearHand.setAttribute('transform', `translate(${f(nearW.x)} ${f(nearW.y)}) rotate(${f(handRot(nearE, nearW))})`);
-    this.farHand.setAttribute('transform', `translate(${f(farW.x)} ${f(farW.y)}) rotate(${f(handRot(farE, farW))})`);
+    const handRot = (e: V, w: V) => -deg(Math.atan2(w.x - e.x, w.y - e.y));
+    this.q.nearHand.setAttribute('transform', `translate(${f(nearW.x)} ${f(nearW.y)}) rotate(${f(handRot(nearE, nearW))})`);
+    this.q.farHand.setAttribute('transform', `translate(${f(farW.x)} ${f(farW.y)}) rotate(${f(handRot(farE, farW))})`);
     this.handWorld = this.toWorld(nearW);
 
-    // Head nod while ordering or chatting
-    this.headG.setAttribute('transform', this.nod ? `rotate(${f(this.nod)} 4 318)` : '');
+    // Phone in hand
+    const onPhone = this.arms.kind === 'phone' && !this.hasCup;
+    (this.q.phone as SVGGElement).style.display = onPhone ? '' : 'none';
+    if (onPhone) this.q.phone.setAttribute('transform', `translate(${f(nearW.x + 2)} ${f(nearW.y - 8)}) rotate(-62)`);
 
-    // Cup in the near hand; scale(dir/build) keeps the lettering readable and in proportion
-    this.cupG.style.display = this.hasCup ? '' : 'none';
+    // Head: steadies against the bob, looks where it's told, nods when talking
+    const gazeTarget = this.gaze + (onPhone ? 12 : 0) + (this.arms.kind === 'sip' ? -9 : 0);
+    this.gazeNow = approach(this.gazeNow, gazeTarget, 6, dt || 1);
+    const headA = this.gazeNow + this.nod - 1.2 * Math.sin(2 * ph) * bl;
+    this.q.head.setAttribute('transform', `rotate(${f(headA)} 4 318)`);
+
+    // Cup in the near hand; scale keeps the lettering readable and in proportion
+    (this.q.cup as SVGGElement).style.display = this.hasCup ? '' : 'none';
     if (this.hasCup) {
-      const tilt = this.arms.kind === 'sip' ? 24 : 0;
-      this.cupG.setAttribute(
+      const tilt = this.arms.kind === 'sip' ? 26 : 0;
+      const sgn = Math.sign(this.facing) || 1;
+      this.q.cup.setAttribute(
         'transform',
-        `translate(${f(nearW.x + 1)} ${f(nearW.y + 13)}) scale(${(this.dir / b).toFixed(3)} 1) rotate(${tilt * this.dir} 0 -13)`,
+        `translate(${f(nearW.x + 1)} ${f(nearW.y + 13)}) scale(${(sgn / b).toFixed(3)} 1) rotate(${tilt * sgn} 0 -13)`,
       );
     }
   }
@@ -487,4 +655,24 @@ export class Figure {
   remove() {
     this.g.remove();
   }
+}
+
+/** Interior angle at joint b (radians). */
+function angleAt(a: V, b: V, c: V) {
+  const u = v(a.x - b.x, a.y - b.y), w = v(c.x - b.x, c.y - b.y);
+  const d = (u.x * w.x + u.y * w.y) / ((Math.hypot(u.x, u.y) * Math.hypot(w.x, w.y)) || 1);
+  return Math.acos(clamp(d, -1, 1));
+}
+
+/** Two little crease lines on the inside of a bent joint. */
+function folds(a: V, b: V, c: V, bend: number, w: number) {
+  if (bend < 0.35) return '';
+  const mid = v((a.x + c.x) / 2 - b.x, (a.y + c.y) / 2 - b.y);
+  const l = Math.hypot(mid.x, mid.y) || 1;
+  const u = v(mid.x / l, mid.y / l);
+  const n = v(-u.y, u.x);
+  const len = Math.min(w * 0.85, 2 + bend * 4);
+  const p = (k: number, off: number) => v(b.x + u.x * k + n.x * off, b.y + u.y * k + n.y * off);
+  const s1 = p(1, -2.2), e1 = p(len, -3.4), s2 = p(1, 2.2), e2 = p(len, 3.4);
+  return `M${f(s1.x)},${f(s1.y)} L${f(e1.x)},${f(e1.y)} M${f(s2.x)},${f(s2.y)} L${f(e2.x)},${f(e2.y)}`;
 }
