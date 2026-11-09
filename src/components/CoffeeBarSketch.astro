@@ -1,0 +1,205 @@
+---
+// Fine-line sketch of a busy coffee bar at THE MESS.
+// Pure SVG, drawn in the logo grey. Shapes with class "o" are filled with the page
+// background so figures in front occlude what's behind them, like a pen drawing.
+
+const cup = (cx: number, by: number, s = 1) => {
+  const w = 11 * s, b = 8 * s, h = 30 * s;
+  return `
+  <g class="cup">
+    <path class="ln o" d="M${cx - w},${by - h} L${cx + w},${by - h} L${cx + b},${by} L${cx - b},${by} Z"/>
+    <path class="ln o" d="M${cx - w - 1},${by - h} L${cx + w + 1},${by - h} L${cx + w},${by - h - 4 * s} L${cx - w},${by - h - 4 * s} Z"/>
+    <path class="ln" d="M${cx - w + 2},${by - h - 4 * s} L${cx - w + 3},${by - h - 7 * s} L${cx + w - 3},${by - h - 7 * s} L${cx + w - 2},${by - h - 4 * s}"/>
+    <path class="ln faint" d="M${cx - w + 0.6},${by - h + 7 * s} L${cx + w - 0.6},${by - h + 7 * s} M${cx - b - 1},${by - 7 * s} L${cx + b + 1},${by - 7 * s}"/>
+    <text class="cup-text" x="${cx + 0.4 * s}" y="${by - 16.5 * s}" font-size="${4.4 * s}">THE</text>
+    <text class="cup-text" x="${cx + 0.4 * s}" y="${by - 10.5 * s}" font-size="${4.4 * s}">MESS</text>
+  </g>`;
+};
+
+const lamp = (x: number) => `
+  <line class="ln" x1="${x}" y1="0" x2="${x}" y2="70"/>
+  <path class="ln o" d="M${x - 30},98 Q${x - 30},70 ${x},70 Q${x + 30},70 ${x + 30},98 Z"/>
+  <path class="ln" d="M${x - 7},98 Q${x},107 ${x + 7},98"/>`;
+
+const croissant = (x: number, y: number) => `
+  <path class="ln o" d="M${x - 13},${y} Q${x - 11},${y - 11} ${x},${y - 11} Q${x + 11},${y - 11} ${x + 13},${y} Q${x},${y - 4} ${x - 13},${y} Z"/>
+  <path class="ln faint" d="M${x - 5},${y - 10} Q${x - 7},${y - 5} ${x - 6},${y - 2} M${x + 5},${y - 10} Q${x + 7},${y - 5} ${x + 6},${y - 2}"/>`;
+
+const smallCup = (x: number, y: number) =>
+  `<path class="ln o" d="M${x - 6},${y - 9} L${x + 6},${y - 9} L${x + 5},${y} L${x - 5},${y} Z"/><path class="ln" d="M${x + 6},${y - 7} q5,1 4,5 l-4,0"/>`;
+
+const bag = (x: number, y: number) =>
+  `<path class="ln o" d="M${x - 10},${y} L${x - 11},${y - 30} L${x - 7},${y - 36} L${x + 7},${y - 36} L${x + 11},${y - 30} L${x + 10},${y} Z"/><path class="ln faint" d="M${x - 11},${y - 30} L${x + 11},${y - 30} M${x - 5},${y - 18} L${x + 5},${y - 18}"/>`;
+
+const jar = (x: number, y: number) =>
+  `<path class="ln o" d="M${x - 9},${y} L${x - 9},${y - 26} Q${x - 9},${y - 30} ${x - 5},${y - 30} L${x + 5},${y - 30} Q${x + 9},${y - 30} ${x + 9},${y - 26} L${x + 9},${y} Z"/><path class="ln" d="M${x - 7},${y - 30} L${x - 7},${y - 34} L${x + 7},${y - 34} L${x + 7},${y - 30}"/>`;
+
+const plant = (x: number, y: number) => `
+  <path class="ln o" d="M${x - 11},${y - 22} L${x + 11},${y - 22} L${x + 8},${y} L${x - 8},${y} Z"/>
+  <path class="ln" d="M${x},${y - 22} Q${x - 4},${y - 44} ${x - 18},${y - 56} M${x},${y - 22} Q${x + 2},${y - 50} ${x + 8},${y - 66} M${x},${y - 22} Q${x + 6},${y - 38} ${x + 22},${y - 46}"/>
+  <path class="ln" d="M${x - 18},${y - 56} q-2,10 8,12 M${x + 8},${y - 66} q8,6 2,14 M${x + 22},${y - 46} q-2,9 -11,8"/>`;
+
+// Counter fluting
+const flutes = Array.from({ length: Math.floor((1064 - 134) / 15) + 1 }, (_, i) => 134 + i * 15)
+  .map((x) => `M${x},420 L${x},590`)
+  .join(' ');
+
+// Tall plant pot in the room
+const floorPlant = (x: number) => `
+  <path class="ln o" d="M${x - 22},600 L${x - 26},540 L${x + 26},540 L${x + 22},600 Z"/>
+  <path class="ln" d="M${x},540 Q${x - 6},480 ${x - 40},430 M${x},540 Q${x + 4},470 ${x + 18},400 M${x},540 Q${x + 12},490 ${x + 46},458 M${x},540 Q${x - 14},500 ${x - 50},494"/>
+  <path class="ln" d="M${x - 40},430 q4,22 22,22 M${x - 40},430 q22,2 24,22 M${x + 18},400 q-14,16 -4,34 M${x + 18},400 q12,18 2,34 M${x + 46},458 q-22,0 -26,16 M${x + 46},458 q-6,20 -26,16 M${x - 50},494 q16,-14 32,-4 M${x - 50},494 q14,12 32,-4"/>`;
+
+const svg = `
+  <!-- Pendant lamps -->
+  ${lamp(380)}${lamp(600)}${lamp(820)}
+
+  <!-- Wall sign -->
+  <text class="sign" x="609" y="196" font-size="34" letter-spacing="17">THE MESS</text>
+  <line class="ln faint" x1="560" y1="214" x2="640" y2="214"/>
+  <text class="sign-sub" x="603" y="232" font-size="8.5" letter-spacing="6">CONCEPT STORE</text>
+
+  <!-- Left shelves -->
+  <line class="ln" x1="110" y1="258" x2="320" y2="258"/>
+  <path class="ln faint" d="M128,258 L128,266 M302,258 L302,266"/>
+  ${jar(140, 258)}${jar(166, 258)}${smallCup(200, 258)}${smallCup(220, 258)}${smallCup(210, 249)}${plant(292, 258)}
+  <line class="ln" x1="110" y1="318" x2="320" y2="318"/>
+  <path class="ln faint" d="M128,318 L128,326 M302,318 L302,326"/>
+  ${bag(140, 318)}${bag(168, 318)}${bag(196, 318)}
+
+  <!-- Right shelves -->
+  <line class="ln" x1="880" y1="258" x2="1090" y2="258"/>
+  <path class="ln faint" d="M898,258 L898,266 M1072,258 L1072,266"/>
+  ${plant(904, 258)}
+  <path class="ln o" d="M950,258 L950,226 L986,226 L986,258 Z"/><path class="ln faint" d="M956,232 L980,232 L980,252 L956,252 Z"/>
+  ${jar(1010, 258)}${jar(1034, 258)}${jar(1058, 258)}
+  <line class="ln" x1="880" y1="318" x2="1090" y2="318"/>
+  <path class="ln faint" d="M898,318 L898,326 M1072,318 L1072,326"/>
+  <path class="ln" d="M916,318 L916,312 L952,312 L952,318 M914,312 L954,312 M918,306 L950,306 M914,306 L954,306"/>
+  ${bag(990, 318)}${bag(1018, 318)}${bag(1046, 318)}
+
+  <!-- Barista one: behind the machine -->
+  <g>
+    <path class="ln o" d="M474,286 C455,288 444,298 440,318 L436,400 L524,400 L520,318 C516,298 505,288 486,286 Z"/>
+    <path class="ln" d="M474,278 L474,287 M486,278 L486,287"/>
+    <ellipse class="ln o" cx="480" cy="262" rx="14" ry="17"/>
+    <path class="ln o" d="M466,262 Q465,244 480,244 Q495,244 494,262 Q490,250 480,250 Q470,251 466,262 Z"/>
+    <circle class="ln o" cx="481" cy="239" r="7"/>
+    <path class="ln" d="M468,300 L462,340 M492,300 L498,340"/>
+    <path class="ln" d="M520,320 C532,338 546,350 560,346"/>
+    <path class="ln" d="M440,320 C430,340 424,352 432,360"/>
+  </g>
+
+  <!-- Barista two: handing over a takeaway cup -->
+  <g>
+    <path class="ln o" d="M754,282 C732,284 722,294 718,316 L714,400 L806,400 L802,316 C798,294 788,284 766,282 Z"/>
+    <path class="ln" d="M754,274 L754,283 M766,274 L766,283"/>
+    <ellipse class="ln o" cx="760" cy="257" rx="14" ry="17"/>
+    <path class="ln o" d="M746,254 Q746,236 762,236 Q777,237 775,254 Q770,244 758,245 Q750,246 746,254 Z"/>
+    <path class="ln" d="M744,300 L738,330 L782,330 L776,300"/>
+    <path class="ln" d="M738,330 L736,400 M782,330 L784,400"/>
+    <path class="ln faint" d="M748,356 L772,356 L772,376 L748,376 Z"/>
+    <path class="ln" d="M800,312 C812,330 816,346 818,356 L848,346"/>
+    <ellipse class="ln o" cx="852" cy="344" rx="5" ry="4"/>
+  </g>
+  ${cup(858, 352)}
+
+  <!-- Counter -->
+  <path class="ln o" d="M120,410 L120,592 L1080,592 L1080,410 Z"/>
+  <path class="ln faint" d="${flutes}"/>
+  <path class="ln o" d="M112,400 L1088,400 L1088,410 L112,410 Z"/>
+  <line class="ln" x1="112" y1="600" x2="1088" y2="600"/>
+  <line class="ln faint" x1="20" y1="600" x2="1180" y2="600"/>
+
+  <!-- Grinder -->
+  <path class="ln o" d="M346,300 L374,300 L366,332 L354,332 Z"/>
+  <path class="ln o" d="M350,332 L370,332 L372,398 L348,398 Z"/>
+  <path class="ln" d="M354,360 L366,360 M360,372 L360,384"/>
+
+  <!-- Espresso machine -->
+  <path class="ln o" d="M402,399 L402,336 Q402,328 410,328 L552,328 Q560,328 560,336 L560,399 Z"/>
+  <line class="ln" x1="408" y1="322" x2="554" y2="322"/>
+  <path class="ln" d="M408,322 L408,328 M554,322 L554,328"/>
+  ${smallCup(426, 322)}${smallCup(446, 322)}${smallCup(466, 322)}
+  <circle class="ln" cx="481" cy="342" r="5"/>
+  <path class="ln" d="M433,348 L457,348 L455,358 L435,358 Z M445,358 L420,366 M503,348 L527,348 L525,358 L505,358 Z M515,358 L540,366"/>
+  <path class="ln faint" d="M442,358 L442,364 M448,358 L448,364 M512,358 L512,364 M518,358 L518,364"/>
+  ${smallCup(445, 392)}${smallCup(515, 392)}
+  <line class="ln" x1="410" y1="392" x2="552" y2="392"/>
+  <path class="ln" d="M560,344 L568,344 L574,378"/>
+
+  <!-- Pastry dome -->
+  <ellipse class="ln o" cx="650" cy="396" rx="52" ry="4"/>
+  <path class="ln o" d="M604,395 C604,352 624,338 650,338 C676,338 696,352 696,395 Z"/>
+  <circle class="ln o" cx="650" cy="333" r="4"/>
+  <path class="ln faint" d="M616,372 Q618,354 636,346"/>
+  ${croissant(628, 393)}${croissant(670, 393)}${croissant(649, 384)}
+
+  <!-- Takeaway cup stack and card reader -->
+  <path class="ln o" d="M972,399 L968,330 L996,330 L992,399 Z"/>
+  <path class="ln faint" d="M970,344 L994,344 M970,358 L994,358 M971,372 L993,372 M971,386 L993,386"/>
+  <path class="ln o" d="M1026,399 L1026,376 L1046,376 L1046,399 Z"/>
+  <path class="ln faint" d="M1030,380 L1042,380 L1042,388 L1030,388 Z"/>
+
+  ${floorPlant(1140)}
+
+  <!-- Customer one: profile, long coat, sipping -->
+  <g transform="translate(220 0)">
+    <path class="ln o" d="M-20,488 L-18,592 L-8,592 L-6,488 Z M6,488 L8,592 L18,592 L20,488 Z"/>
+    <path class="ln o" d="M-18,592 L-18,600 L-2,600 Q-2,594 -8,592 Z M8,592 L8,600 L26,600 Q26,594 18,592 Z"/>
+    <path class="ln o" d="M-8,316 C-30,318 -36,330 -38,356 L-44,490 L40,490 L34,356 C32,330 26,318 8,316 Z"/>
+    <path class="ln" d="M-8,316 L0,346 L8,316 M-37,420 Q0,426 35,420"/>
+    <path class="ln" d="M-34,336 C-42,380 -42,420 -38,452"/>
+    <ellipse class="ln o" cx="3" cy="290" rx="13" ry="17"/>
+    <path class="ln o" d="M-12,302 Q-17,270 3,268 Q21,268 18,302 Q16,290 15,282 Q4,276 -9,282 Q-10,292 -12,302 Z"/>
+    <path class="ln" d="M30,334 C40,362 40,392 34,404 L18,380"/>
+  </g>
+  ${cup(236, 386)}
+
+  <!-- Customer two: back view, tote bag, waiting -->
+  <g transform="translate(330 0)">
+    <path class="ln o" d="M-30,452 L-26,592 L-6,592 L-2,470 L2,470 L6,592 L26,592 L30,452 Z"/>
+    <path class="ln o" d="M-28,592 L-28,600 L-4,600 L-4,592 Z M4,592 L4,600 L28,600 L28,592 Z"/>
+    <path class="ln o" d="M-8,312 C-34,314 -42,326 -44,350 L-44,454 L44,454 L44,350 C42,326 34,314 8,312 Z"/>
+    <path class="ln faint" d="M0,428 L0,454"/>
+    <path class="ln" d="M-40,330 C-48,370 -48,410 -46,446 M40,330 C48,370 48,410 46,446"/>
+    <path class="ln" d="M-28,316 L-54,416"/>
+    <path class="ln o" d="M-66,410 L-38,410 L-36,474 L-68,474 Z"/>
+    <ellipse class="ln o" cx="0" cy="286" rx="14" ry="17"/>
+    <path class="ln o" d="M-14,292 Q-16,268 0,268 Q16,268 14,292 Q0,286 -14,292 Z"/>
+  </g>
+
+  <!-- Customer three: reaching for the cup -->
+  <g transform="translate(930 0)">
+    <path class="ln o" d="M-36,450 L-40,592 L-4,592 L0,478 L4,592 L38,592 L34,450 Z"/>
+    <path class="ln" d="M-42,600 L-4,600 M4,600 L40,600"/>
+    <path class="ln o" d="M-8,312 C-30,314 -36,326 -38,350 L-40,452 L38,452 L36,350 C34,326 28,314 8,312 Z"/>
+    <path class="ln faint" d="M-40,440 L38,440"/>
+    <path class="ln" d="M34,334 C40,380 40,420 38,446"/>
+    <path class="ln" d="M-30,334 C-44,350 -56,356 -64,350"/>
+    <ellipse class="ln o" cx="-67" cy="349" rx="5" ry="4"/>
+    <ellipse class="ln o" cx="-2" cy="286" rx="13" ry="17"/>
+    <path class="ln o" d="M-15,286 Q-15,268 0,268 Q15,268 13,288 Q4,276 -15,286 Z"/>
+    <path class="ln" d="M12,280 Q26,286 24,310 Q20,298 13,292"/>
+  </g>
+
+  <!-- Customer four: walking out with a cup -->
+  <g transform="translate(1062 0)">
+    <path class="ln o" d="M0,500 L22,592 L34,592 L12,500 Z M-18,500 L-30,592 L-18,592 L-6,500 Z"/>
+    <path class="ln o" d="M22,592 L22,600 L42,600 Q42,594 34,592 Z M-32,592 L-32,600 L-14,600 Q-14,594 -18,592 Z"/>
+    <path class="ln o" d="M-8,312 C-30,314 -38,326 -40,350 L-46,502 L42,502 L38,350 C36,326 28,314 8,312 Z"/>
+    <path class="ln" d="M-6,312 L2,352 L8,312 M2,352 L2,502"/>
+    <path class="ln" d="M-36,336 C-44,376 -46,410 -42,440"/>
+    <ellipse class="ln o" cx="2" cy="288" rx="13" ry="17"/>
+    <path class="ln o" d="M-12,284 Q-13,268 3,268 Q18,268 16,282 Q13,276 4,276 Q-6,276 -12,284 Z"/>
+    <path class="ln" d="M32,334 C44,368 46,398 42,422"/>
+  </g>
+  ${cup(1106, 442)}
+`;
+---
+<figure class="sketch">
+  <svg viewBox="0 0 1200 610" role="img" aria-labelledby="sketch-title" preserveAspectRatio="xMidYMid meet">
+    <title id="sketch-title">Line drawing of the coffee bar at THE MESS: two baristas at work beneath the wall sign, customers waiting and leaving with THE MESS takeaway cups.</title>
+    <Fragment set:html={svg} />
+  </svg>
+</figure>

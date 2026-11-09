@@ -512,3 +512,50 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
   /* Two balanced rows on phones: COFFEE - INTERIORS / PILATES - WELLBEING */
   .hero .tagline .sep-mid { flex-basis: 100%; height: 0; overflow: hidden; font-size: 0; }
 }
+
+/* ---------- Coffee bar sketch ---------- */
+.sketch-section {
+  padding: clamp(48px, 8vw, 120px) var(--gutter) clamp(24px, 4vw, 64px);
+}
+.sketch { margin: 0 auto; max-width: 1180px; }
+.sketch svg { display: block; width: 100%; height: auto; overflow: visible; }
+.sketch .ln {
+  fill: none;
+  stroke: var(--fg);
+  stroke-width: 0.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.sketch .o { fill: var(--bg); }
+.sketch .faint { stroke-opacity: 0.4; }
+.sketch .sign {
+  fill: none;
+  stroke: var(--fg);
+  stroke-width: 0.75;
+  vector-effect: non-scaling-stroke;
+  font-family: var(--font-mark);
+  font-weight: 700;
+  text-anchor: middle;
+}
+.sketch .sign-sub {
+  fill: var(--fg);
+  font-family: var(--font-body);
+  font-weight: 300;
+  text-anchor: middle;
+}
+.sketch .cup-text {
+  fill: var(--fg);
+  font-family: var(--font-mark);
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-anchor: middle;
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* The sketch draws itself in from left to right as it scrolls into view */
+  .js .draw svg {
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 2.6s cubic-bezier(0.65, 0, 0.35, 1) 150ms;
+  }
+  .js .draw.is-visible svg { clip-path: inset(0 0 0 0); }
+}

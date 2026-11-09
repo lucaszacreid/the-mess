@@ -4,6 +4,7 @@ import '@fontsource/jost/latin-300.css';
 import '@fontsource/jost/latin-400.css';
 import 'lenis/dist/lenis.css';
 import '../styles/global.css';
+import CoffeeBarSketch from '../components/CoffeeBarSketch.astro';
 
 const title = 'THE MESS — Coffee, Interiors & Wellbeing · Glasgow';
 const description = 'THE MESS — Coffee, interiors & wellbeing. 37 Otago Street, Glasgow G12 8JJ';
@@ -145,6 +146,12 @@ const jsonLd = {
           </div>
         </div>
         <span class="scroll-cue" aria-hidden="true"></span>
+      </section>
+
+      <section class="sketch-section" aria-label="The coffee bar">
+        <div class="reveal draw">
+          <CoffeeBarSketch />
+        </div>
       </section>
 
       <section class="section" id="about" aria-labelledby="about-title">
