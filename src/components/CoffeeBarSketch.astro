@@ -59,16 +59,17 @@ const svg = `
   <path class="ln" d="M916,318 L916,312 L952,312 L952,318 M914,312 L954,312 M918,306 L950,306 M914,306 L954,306"/>
   ${bag(990, 318)}${bag(1018, 318)}${bag(1046, 318)}
 
-  <!-- Barista one: at the La Marzocco on the separate right-hand unit -->
-  <g transform="translate(506 0)">
-    <path class="ln o" d="M468,282 C449,284 438,294 434,314 L430,420 L518,420 L514,314 C510,294 499,284 480,282 Z"/>
-    <path class="ln" d="M468,274 L468,283 M480,274 L480,283"/>
-    <ellipse class="ln o" cx="474" cy="258" rx="14" ry="17"/>
-    <path class="ln o" d="M460,258 Q459,240 474,240 Q489,240 488,258 Q484,246 474,246 Q464,247 460,258 Z"/>
-    <circle class="ln o" cx="475" cy="235" r="7"/>
-    <path class="ln" d="M462,296 L456,330 M486,296 L492,330"/>
-    <path class="ln" d="M514,316 C526,330 540,338 556,336"/>
-    <path class="ln" d="M434,316 C424,334 420,346 428,354"/>
+  <!-- Barista one: working the La Marzocco against the right-hand wall -->
+  <g>
+    <!-- side-on, facing the machine on the right-hand wall -->
+    <path class="ln o" d="M944,282 C932,286 928,300 928,320 L926,420 L970,420 L968,320 C968,300 964,288 956,282 Z"/>
+    <path class="ln" d="M948,276 L948,284 M956,276 L956,284"/>
+    <ellipse class="ln o" cx="953" cy="260" rx="13" ry="17"/>
+    <path class="ln o" d="M940,262 Q938,242 953,242 Q967,242 966,256 Q958,248 948,250 Q942,254 940,262 Z"/>
+    <circle class="ln o" cx="938" cy="250" r="7"/>
+    <path class="ln" d="M964,300 L972,330 M930,350 L968,350"/>
+    <path class="ln" d="M960,298 C972,316 978,336 988,350"/>
+    <path class="ln" d="M948,302 C954,330 962,352 974,362 L986,364"/>
   </g>
 
   <!-- Barista two: behind the central unit, handing a cup across -->
@@ -100,22 +101,21 @@ const svg = `
   <!-- Separate unit on the right with the La Marzocco -->
   <path class="ln o" d="M892,406 L892,600 L1072,600 L1072,406 Z"/>
   <path class="ln o" d="M884,399 L1080,399 L1080,406 L884,406 Z"/>
-  <g transform="translate(506 0)">
-    <path class="ln" d="M404,398 L404,392 M544,398 L544,392"/>
-    <path class="ln o" d="M398,392 L398,334 Q398,328 404,328 L544,328 Q550,328 550,334 L550,392 Z"/>
-    <path class="ln" d="M398,346 L550,346 M398,368 L550,368"/>
-    <path class="ln faint" d="M410,328 L410,392 M538,328 L538,392"/>
-    <ellipse class="ln" cx="474" cy="337" rx="16" ry="4.5"/>
-    <circle class="ln" cx="440" cy="357" r="5"/><circle class="ln" cx="508" cy="357" r="5"/>
-    <path class="ln" d="M402,322 L546,322 M402,322 L402,328 M546,322 L546,328"/>
-    ${smallCup(420, 322)}${smallCup(438, 322)}${smallCup(510, 322)}${smallCup(528, 322)}
-    <path class="ln" d="M396,326 L392,326 L392,332 M552,326 L556,326 L556,332"/>
-    <path class="ln" d="M393,334 L384,372 M555,334 L566,372"/>
-    <path class="ln o" d="M432,368 L448,368 L446,376 L434,376 Z M500,368 L516,368 L514,376 L502,376 Z"/>
-    <path class="ln" d="M440,376 L418,382 M508,376 L530,382"/>
-    <path class="ln faint" d="M437,376 L437,381 M443,376 L443,381 M505,376 L505,381 M511,376 L511,381"/>
-    <line class="ln" x1="404" y1="386" x2="544" y2="386"/>
-    ${smallCup(440, 386)}${smallCup(508, 386)}
+  <g>
+    <!-- La Marzocco side-on: back against the wall, group heads facing into the bar -->
+    <path class="ln" d="M1012,399 L1012,394 M1064,399 L1064,394"/>
+    <path class="ln o" d="M1004,394 L1004,334 Q1004,328 1010,328 L1066,328 Q1072,328 1072,334 L1072,394 Z"/>
+    <path class="ln" d="M1004,346 L1072,346 M1004,368 L1072,368"/>
+    <path class="ln faint" d="M1016,328 L1016,394 M1060,328 L1060,394"/>
+    <path class="ln" d="M1008,322 L1068,322 M1008,322 L1008,328 M1068,322 L1068,328"/>
+    ${smallCup(1026, 322)}${smallCup(1048, 322)}
+    <path class="ln o" d="M1004,352 L992,352 L990,362 L1004,362 Z"/>
+    <path class="ln" d="M990,364 L960,368 M988,362 L996,362"/>
+    <path class="ln faint" d="M992,364 L992,374 M996,364 L996,374"/>
+    <path class="ln o" d="M1004,386 L986,386 L986,394 L1004,394 Z"/>
+    ${smallCup(994, 386)}
+    <path class="ln" d="M1004,338 L998,338 L994,376"/>
+    <circle class="ln" cx="1004" cy="334" r="2.5"/>
   </g>
 
   <line class="ln" x1="0" y1="600" x2="1200" y2="600"/>
@@ -185,7 +185,7 @@ const svg = `
   </g>
 
   <!-- Customer four: walking out with a cup -->
-  <g transform="translate(1112 0)">
+  <g transform="translate(1142 0)">
     <path class="ln o" d="M0,500 L22,592 L34,592 L12,500 Z M-18,500 L-30,592 L-18,592 L-6,500 Z"/>
     <path class="ln o" d="M22,592 L22,600 L42,600 Q42,594 34,592 Z M-32,592 L-32,600 L-14,600 Q-14,594 -18,592 Z"/>
     <path class="ln o" d="M-8,312 C-30,314 -38,326 -40,350 L-46,502 L42,502 L38,350 C36,326 28,314 8,312 Z"/>
@@ -195,7 +195,7 @@ const svg = `
     <path class="ln o" d="M-12,284 Q-13,268 3,268 Q18,268 16,282 Q13,276 4,276 Q-6,276 -12,284 Z"/>
     <path class="ln" d="M32,334 C44,368 46,398 42,422"/>
   </g>
-  ${cup(1156, 442)}
+  ${cup(1186, 442)}
 `;
 ---
 <figure class="sketch">
