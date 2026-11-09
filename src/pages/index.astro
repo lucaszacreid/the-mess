@@ -16,6 +16,8 @@ const instagram = 'https://www.instagram.com/themessconcept/';
 const email = 'hello@themessconcept.co.uk';
 const phone = '+44 7856 050231';
 const phoneHref = '+447856050231';
+// Loyalty card sign-up link from the loyalty service. The link only appears on the site once this is set.
+const loyaltyUrl = '';
 
 const nav = [
   ['about', 'About'],
@@ -213,6 +215,11 @@ const jsonLd = {
             <a class="text-link" href={instagram} target="_blank" rel="noopener noreferrer">
               Instagram<span class="sr-only"> (opens in a new tab)</span>
             </a>
+            {loyaltyUrl && (
+              <a class="text-link" href={loyaltyUrl} target="_blank" rel="noopener noreferrer">
+                Loyalty Card<span class="sr-only"> (add to your phone's wallet, opens in a new tab)</span>
+              </a>
+            )}
           </div>
         </div>
       </section>
