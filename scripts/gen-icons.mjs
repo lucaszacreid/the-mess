@@ -22,7 +22,7 @@ const svgWide = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="63
   <rect width="1200" height="630" fill="${BG}"/>
   <text x="630" y="300" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="700" font-size="84" letter-spacing="42" fill="${FG}">THE MESS</text>
   <line x1="520" y1="350" x2="680" y2="350" stroke="${FG}" stroke-width="1.5"/>
-  <text x="604" y="405" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="300" font-size="20" letter-spacing="8" fill="#8A8584">COFFEE · SHOP · PILATES · WELLNESS</text>
+  <text x="604" y="405" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="300" font-size="20" letter-spacing="8" fill="#8A8584">COFFEE - INTERIORS - WELLBEING</text>
 </svg>`;
 
 const sqInput = existsSync(square) ? square : Buffer.from(svgSquare(512));
