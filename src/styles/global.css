@@ -414,3 +414,36 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
   letter-spacing: 0.3em;
   color: var(--fg-dim);
 }
+
+/* ---------- Hero sub-mark + contact ---------- */
+.hero-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 1.6vw, 22px);
+}
+.submark {
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: clamp(0.75rem, 3.1vw, 2.125rem);
+  letter-spacing: 0.85em;
+  text-indent: 0.85em;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--fg);
+}
+.address .contact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 28px;
+}
+.address .contact a {
+  display: inline-block;
+  padding: 4px 0;
+  overflow-wrap: anywhere;
+  color: var(--fg-dim);
+  transition: color 300ms var(--ease);
+}
+.address .contact a:hover,
+.address .contact a:focus-visible { color: var(--fg); }
