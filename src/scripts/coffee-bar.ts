@@ -1,371 +1,200 @@
 // Timelapse animation for the coffee bar sketch.
 // Customers walk in from the left, queue, order, collect a THE MESS cup and then
-// either leave or stand and chat for a while. The counter barista takes orders and
-// hands drinks over; the La Marzocco barista tamps, pulls shots and steams milk.
-// Everything runs at a sped-up, timelapse pace. Nothing runs with reduced motion,
-// and the loop pauses whenever the sketch is off screen.
+// either leave or stand and chat. The counter barista takes orders and hands drinks
+// over; the La Marzocco barista tamps, pulls shots and steams milk; the seated
+// customer sips. Everything runs at a sped-up, timelapse pace. With reduced motion
+// the opening frame is drawn once and nothing moves. The loop pauses off screen.
 
-import { cupMarkup } from '../lib/sketch';
+import { Figure, randomLook, rand, type Look } from './figure';
 
-type Hair = 'bob' | 'short' | 'pony' | 'bun';
-type Coat = 'long' | 'short';
-type Pose = 'down' | 'hold' | 'sip' | 'reach';
-type State =
-  | 'walk' | 'queue' | 'order' | 'waitDrink' | 'receive'
-  | 'toSpot' | 'mingle' | 'leave' | 'pass';
+type State = 'walk' | 'queue' | 'order' | 'waitDrink' | 'receive' | 'toSpot' | 'mingle' | 'leave' | 'pass';
 
-const NS = 'http://www.w3.org/2000/svg';
-const rand = (a: number, b: number) => a + Math.random() * (b - a);
-const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-
-// Walking pace and step rhythm, tuned to read as a sped-up timelapse.
-const WALK_SPEED = 165; // svg units per second
-const STEP_RATE = 9.5; // radians of stride phase per second
-
-const QUEUE_X = [540, 458, 376, 294];
+const WALK_SPEED = 150; // svg units per second
+const STEP_RATE = 8.2; // stride phase, radians per second
+const QUEUE_X = [526, 446, 366, 286];
 const EXIT_LEFT = -90;
 const EXIT_RIGHT = 1290;
+const BARISTA_HAND = { x: 612, y: 336 }; // where the counter barista holds the cup out
 
-// ---------- Figure markup (profile, facing right; feet on y = 600) ----------
+interface Spot { x: number; dir: 1 | -1; who: Customer | null }
 
-const legMarkup = (hip: number) =>
-  `<path class="ln o" d="M-9,${hip} L-7,592 L7,592 L9,${hip} Z"/>` +
-  `<path class="ln o" d="M-7,592 L-7,600 L14,600 Q14,594 7,592 Z"/>`;
-
-const COATS: Record<Coat, { hip: number; markup: string }> = {
-  long: {
-    hip: 470,
-    markup:
-      '<path class="ln o" d="M-8,316 C-30,318 -36,330 -38,356 L-44,490 L40,490 L34,356 C32,330 26,318 8,316 Z"/>' +
-      '<path class="ln" d="M-8,316 L0,346 L8,316 M-37,420 Q0,426 35,420"/>',
-  },
-  short: {
-    hip: 440,
-    markup:
-      '<path class="ln o" d="M-8,312 C-26,314 -31,326 -32,350 L-33,456 L31,456 L30,350 C29,326 24,314 8,312 Z"/>' +
-      '<path class="ln faint" d="M-33,444 L31,444 M2,330 L2,456"/>',
-  },
-};
-
-const HAIR: Record<Hair, { back: string; front: string }> = {
-  bob: {
-    back: '',
-    front: '<path class="ln o" d="M-12,302 Q-17,270 3,268 Q21,268 18,302 Q16,290 15,282 Q4,276 -9,282 Q-10,292 -12,302 Z"/>',
-  },
-  short: {
-    back: '',
-    front: '<path class="ln o" d="M-12,284 Q-13,268 3,268 Q18,268 16,282 Q13,276 4,276 Q-6,276 -12,284 Z"/>',
-  },
-  pony: {
-    back: '<path class="ln" d="M-11,280 Q-26,286 -24,310 Q-20,298 -12,292"/>',
-    front: '<path class="ln o" d="M-12,288 Q-14,268 3,268 Q18,268 16,284 Q8,276 -12,288 Z"/>',
-  },
-  bun: {
-    back: '<circle class="ln o" cx="-11" cy="272" r="6.5"/>',
-    front: '<path class="ln o" d="M-12,286 Q-13,268 3,268 Q18,268 16,282 Q10,274 -12,286 Z"/>',
-  },
-};
-
-const TOTE =
-  '<path class="ln" d="M-6,318 L-26,420"/>' +
-  '<path class="ln o" d="M-40,414 L-14,414 L-12,474 L-42,474 Z"/>';
-
-// Near arm, shoulder at (4, 330).
-const ARM: Record<Pose, string> = {
-  down: 'M4,330 C10,368 10,410 6,446',
-  hold: 'M4,330 C12,360 12,388 8,400 L22,384',
-  sip: 'M4,330 C14,356 18,368 18,370 L23,334',
-  reach: 'M4,330 C22,344 42,350 60,346',
-};
-// Where the cup sits (centre x, base y) for each arm pose.
-const CUP_AT: Record<Pose, [number, number]> = {
-  down: [24, 392],
-  hold: [24, 392],
-  sip: [27, 338],
-  reach: [64, 352],
-};
-
-// ---------- People ----------
-
-class Person {
-  x: number;
-  dir: 1 | -1;
-  s = rand(0.95, 1.04);
-  speed = WALK_SPEED * rand(0.9, 1.12);
-  hip: number;
+class Customer {
+  fig: Figure;
   state: State = 'walk';
   target: number;
+  speed = WALK_SPEED * rand(0.88, 1.12);
   timer = 0;
-  phase = rand(0, Math.PI * 2);
-  pose: Pose = 'down';
-  hasCup = false;
-  showCup = false;
   nextSip = rand(1.5, 4);
   sipLeft = 0;
   spot: Spot | null = null;
   done = false;
+  reaching = false;
 
-  g: SVGGElement;
-  near: SVGGElement;
-  far: SVGGElement;
-  armG: SVGGElement;
-  armPath: SVGPathElement;
-  hand: SVGEllipseElement;
-  cupG: SVGGElement;
-  private shownPose: Pose | null = null;
-
-  constructor(parent: SVGGElement, x: number, opts: { coat?: Coat; hair?: Hair; tote?: boolean } = {}) {
-    const coat = opts.coat ?? pick<Coat>(['long', 'short', 'short']);
-    const hair = opts.hair ?? pick<Hair>(['bob', 'short', 'pony', 'bun', 'short']);
-    const tote = opts.tote ?? Math.random() < 0.25;
-    this.hip = COATS[coat].hip;
-    this.x = x;
+  constructor(parent: SVGGElement, x: number, look?: Look) {
+    this.fig = new Figure(parent, look);
+    this.fig.x = x;
     this.target = x;
-    this.dir = 1;
-
-    this.g = document.createElementNS(NS, 'g');
-    this.g.innerHTML =
-      `<g data-far>${legMarkup(this.hip)}</g>` +
-      `<g data-near>${legMarkup(this.hip)}</g>` +
-      COATS[coat].markup +
-      (tote ? TOTE : '') +
-      `<g data-head>${HAIR[hair].back}<path class="ln" d="M-3,304 L-3,316 M7,304 L7,316"/>` +
-      `<ellipse class="ln o" cx="2" cy="290" rx="13" ry="17"/>${HAIR[hair].front}</g>` +
-      `<g data-arm><path class="ln" d=""/><ellipse class="ln o" cx="62" cy="346" rx="5" ry="4"/></g>` +
-      `<g data-cup>${cupMarkup(0, 0)}</g>`;
-    this.far = this.g.querySelector('[data-far]')!;
-    this.near = this.g.querySelector('[data-near]')!;
-    this.armG = this.g.querySelector('[data-arm]')!;
-    this.armPath = this.armG.querySelector('path')!;
-    this.hand = this.armG.querySelector('ellipse')!;
-    this.cupG = this.g.querySelector('[data-cup]')!;
-    parent.appendChild(this.g);
   }
+  get x() { return this.fig.x; }
+  get walking() { return Math.abs(this.target - this.fig.x) > 0.5; }
 
-  get walking() {
-    return Math.abs(this.target - this.x) > 0.5;
-  }
-
-  /** Move toward target; returns true on the frame it arrives. */
   step(dt: number) {
-    const d = this.target - this.x;
-    if (Math.abs(d) <= 0.5) {
-      this.x = this.target;
-      return false;
-    }
-    this.dir = d > 0 ? 1 : -1;
-    const move = Math.min(Math.abs(d), this.speed * dt);
-    this.x += this.dir * move;
-    this.phase += STEP_RATE * dt * (this.speed / WALK_SPEED);
-    if (Math.abs(this.target - this.x) <= 0.5) {
-      this.x = this.target;
-      return true;
-    }
+    const d = this.target - this.fig.x;
+    if (Math.abs(d) <= 0.5) { this.fig.x = this.target; this.fig.walking = false; return false; }
+    this.fig.dir = d > 0 ? 1 : -1;
+    this.fig.x += this.fig.dir * Math.min(Math.abs(d), this.speed * dt);
+    this.fig.phase += STEP_RATE * dt * (this.speed / WALK_SPEED);
+    this.fig.walking = true;
+    if (Math.abs(this.target - this.fig.x) <= 0.5) { this.fig.x = this.target; this.fig.walking = false; return true; }
     return false;
   }
-
-  bringToFront() {
-    this.g.parentNode?.appendChild(this.g);
-  }
-
-  render() {
-    const walking = this.walking;
-    const sw = walking ? Math.sin(this.phase) * 22 : 3;
-    const bob = walking ? -Math.abs(Math.sin(this.phase)) * 2.2 : 0;
-    this.g.setAttribute(
-      'transform',
-      `translate(${this.x.toFixed(1)} ${(600 + bob).toFixed(2)}) scale(${this.dir * this.s} ${this.s}) translate(0 -600)`,
-    );
-    this.near.setAttribute('transform', `rotate(${sw.toFixed(2)} 0 ${this.hip})`);
-    this.far.setAttribute('transform', `rotate(${(-sw).toFixed(2)} 0 ${this.hip})`);
-
-    const pose: Pose = this.pose === 'down' && this.hasCup ? 'hold' : this.pose;
-    if (pose !== this.shownPose) {
-      this.armPath.setAttribute('d', ARM[pose]);
-      this.hand.style.display = pose === 'reach' ? '' : 'none';
-      this.shownPose = pose;
-    }
-    const armSwing = !walking ? 0 : pose === 'down' ? -sw * 0.6 : -sw * 0.12;
-    this.armG.setAttribute('transform', `rotate(${armSwing.toFixed(2)} 4 330)`);
-
-    const cupVisible = this.hasCup || this.showCup;
-    this.cupG.style.display = cupVisible ? '' : 'none';
-    if (cupVisible) {
-      const [cx, by] = CUP_AT[pose];
-      // Swing with the arm around the shoulder; scale(dir) undoes the figure's mirror
-      // so the cup lettering always reads the right way round.
-      this.cupG.setAttribute(
-        'transform',
-        `rotate(${armSwing.toFixed(2)} 4 330) translate(${cx} ${by}) scale(${this.dir} 1)`,
-      );
-    }
-  }
-
-  remove() {
-    this.g.remove();
-    this.done = true;
-  }
+  remove() { this.fig.remove(); this.done = true; }
 }
-
-interface Spot { x: number; dir: 1 | -1; who: Person | null }
-
-// ---------- Scene ----------
 
 export function startCoffeeBar() {
   const svg = document.querySelector<SVGSVGElement>('.sketch svg');
   const crowd = document.getElementById('cb-crowd') as SVGGElement | null;
-  if (!svg || !crowd) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const staff = document.getElementById('cb-staff') as SVGGElement | null;
+  if (!svg || !crowd || !staff) return;
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const $ = <T extends Element>(id: string) => document.getElementById(id) as unknown as T;
-  const b1Head = $<SVGGElement>('b1-head');
-  const b1Arm1 = $<SVGPathElement>('b1-arm1');
-  const b1Arm2 = $<SVGPathElement>('b1-arm2');
-  const b1Jug = $<SVGPathElement>('b1-jug');
-  const b1Steam = $<SVGPathElement>('b1-steam');
   const b2 = $<SVGGElement>('b2');
   const b2Head = $<SVGGElement>('b2-head');
   const b2Reach = $<SVGGElement>('b2-reach');
-  const b2Idle = $<SVGPathElement>('b2-idle');
+  const b2Idle = $<SVGGElement>('b2-idle');
   const b2Cup = $<SVGGElement>('b2-cup');
-  const seatArm = $<SVGPathElement>('seat-arm');
-  const seatCup = $<SVGGElement>('seat-cup');
+  const jug = $<SVGGElement>('b1-jug');
+  const steam = $<SVGPathElement>('b1-steam');
+  const pour = $<SVGPathElement>('b1-pour');
 
-  // Swap the still frame's customers for live ones.
+  // Swap the no-JS drawings for live figures.
   crowd.innerHTML = '';
+  $<SVGGElement>('b1').style.display = 'none';
+  $<SVGGElement>('seat-person').style.display = 'none';
 
-  const people: Person[] = [];
-  const queue: Person[] = [];
-  const spots: Spot[] = [
-    { x: 262, dir: 1, who: null },
-    { x: 1108, dir: 1, who: null },
-    { x: 1166, dir: -1, who: null },
-  ];
-
-  // --- Baristas ---
-  const B1_POSES = {
-    shot: ['M960,298 C972,316 978,336 988,350', 'M948,302 C954,330 962,352 974,362 L986,364'],
-    tamp: ['M960,298 C968,318 972,334 976,346', 'M948,302 C954,326 960,340 970,344'],
-    steam: ['M960,298 C970,320 976,346 986,366', 'M948,302 C956,330 966,350 980,370'],
+  // --- La Marzocco barista, side-on ---
+  const b1 = new Figure(staff, {
+    outfit: 'barista', hair: 'bun', bottom: 'straight', shoe: 'trainer',
+    extras: ['earring'], height: 1, build: 1,
+  });
+  b1.x = 944;
+  const B1_TARGETS = {
+    idle: [{ x: 960, y: 386 }, { x: 952, y: 392 }],
+    tamp: [{ x: 980, y: 352 }, { x: 973, y: 357 }],
+    shot: [{ x: 966, y: 366 }, { x: 997, y: 345 }],
+    steam: [{ x: 982, y: 364 }, { x: 1000, y: 337 }],
   };
-  type B1Pose = keyof typeof B1_POSES;
-  const brewCycle: B1Pose[] = ['tamp', 'tamp', 'shot', 'shot', 'steam', 'steam', 'steam'];
-  let b1Pose: B1Pose | null = null;
-  const setB1 = (p: B1Pose) => {
-    if (p === b1Pose) return;
-    b1Arm1.setAttribute('d', B1_POSES[p][0]);
-    b1Arm2.setAttribute('d', B1_POSES[p][1]);
-    b1Jug.style.display = p === 'steam' ? '' : 'none';
-    b1Steam.style.display = p === 'steam' ? '' : 'none';
-    b1Pose = p;
-  };
-  const machine = { queue: [] as Person[], busy: null as Person | null, t: 0, ready: [] as Person[] };
+  type B1Pose = keyof typeof B1_TARGETS;
+  const b1Hands = B1_TARGETS.idle.map((p) => ({ ...p }));
+  let b1Pose: B1Pose = 'idle';
+  const brewCycle: B1Pose[] = ['tamp', 'tamp', 'shot', 'shot', 'shot', 'steam', 'steam', 'steam'];
+  const BREW_TIME = 2.6;
 
+  // --- Seated customer on the block ---
+  const seated = new Figure(crowd, {
+    outfit: 'knit', hair: 'curly', bottom: 'wide', shoe: 'trainer',
+    extras: ['glasses'], height: 1, build: 1.05,
+  });
+  seated.seated = true;
+  seated.dir = -1;
+  seated.x = 172;
+  seated.y = 50;
+  seated.hasCup = true;
+  seated.arms = { kind: 'hold' };
+  const seat = { t: rand(1, 3), sipping: false };
+
+  // --- Counter barista ---
   type B2State = 'idle' | 'taking' | 'fetch' | 'hand';
-  const bar = { state: 'idle' as B2State, t: 0, who: null as Person | null, handed: false };
-  const B2_LEFT = 'translate(1464 0) scale(-1 1)';
-  const B2_RIGHT = 'translate(-56 0)';
+  const bar = { state: 'idle' as B2State, t: 0, who: null as Customer | null, handed: false };
   const setB2 = (facing: 'left' | 'right', reach: boolean, cup: boolean) => {
-    b2.setAttribute('transform', facing === 'left' ? B2_LEFT : B2_RIGHT);
+    b2.setAttribute('transform', facing === 'left' ? 'translate(1464 0) scale(-1 1)' : 'translate(-56 0)');
     b2Reach.style.display = reach ? '' : 'none';
     b2Idle.style.display = reach ? 'none' : '';
     b2Cup.style.display = cup ? '' : 'none';
   };
   setB2('left', false, false);
 
-  // --- Seated customer sips now and then ---
-  const seat = { t: rand(1, 3), sipping: false };
-  const SEAT_HOLD = 'M106,484 C98,502 96,514 88,512';
-  const SEAT_SIP = 'M106,484 C100,478 98,470 98,466';
+  const machine = { queue: [] as Customer[], busy: null as Customer | null, t: 0, ready: [] as Customer[] };
+  const people: Customer[] = [];
+  const queue: Customer[] = [];
+  const spots: Spot[] = [
+    { x: 268, dir: 1, who: null },
+    { x: 1106, dir: 1, who: null },
+    { x: 1168, dir: -1, who: null },
+  ];
 
-  // --- Spawning ---
-  const addPerson = (x: number, opts?: ConstructorParameters<typeof Person>[2]) => {
-    const p = new Person(crowd, x, opts);
-    people.push(p);
-    return p;
+  const add = (x: number, look?: Look) => {
+    const c = new Customer(crowd, x, look);
+    people.push(c);
+    return c;
   };
-
-  const joinQueue = (p: Person) => {
-    queue.push(p);
-    p.state = 'walk';
-    p.target = QUEUE_X[queue.length - 1];
+  const joinQueue = (c: Customer) => {
+    queue.push(c);
+    c.state = 'walk';
+    c.target = QUEUE_X[queue.length - 1];
   };
-
-  const freeSpot = () => spots.find((s) => !s.who) ?? null;
-
-  const leave = (p: Person, side?: 'left' | 'right') => {
-    if (p.spot) {
-      p.spot.who = null;
-      p.spot = null;
-    }
-    const goRight = side ? side === 'right' : Math.random() < 0.6;
-    p.state = 'leave';
-    p.target = goRight ? EXIT_RIGHT : EXIT_LEFT;
-    p.pose = 'down';
-    p.bringToFront();
+  const leave = (c: Customer, side?: 'left' | 'right') => {
+    if (c.spot) { c.spot.who = null; c.spot = null; }
+    c.state = 'leave';
+    c.target = (side ? side === 'right' : Math.random() < 0.6) ? EXIT_RIGHT : EXIT_LEFT;
+    c.fig.nod = 0;
+    c.fig.bringToFront();
   };
-
-  const afterDrink = (p: Person) => {
-    const spot = Math.random() < 0.5 ? freeSpot() : null;
+  const afterDrink = (c: Customer) => {
+    const spot = Math.random() < 0.55 ? spots.find((s) => !s.who) ?? null : null;
     if (spot) {
-      spot.who = p;
-      p.spot = spot;
-      p.state = 'toSpot';
-      p.target = spot.x;
-      p.bringToFront();
-    } else {
-      leave(p);
-    }
+      spot.who = c;
+      c.spot = spot;
+      c.state = 'toSpot';
+      c.target = spot.x;
+      c.fig.bringToFront();
+    } else leave(c);
   };
 
-  let spawnIn = 1.2;
+  let spawnIn = 1.5;
   const spawn = () => {
     if (Math.random() < 0.15) {
-      // Someone just walking through
       const fromLeft = Math.random() < 0.5;
-      const p = addPerson(fromLeft ? EXIT_LEFT : EXIT_RIGHT);
-      p.hasCup = Math.random() < 0.5;
-      p.state = 'pass';
-      p.target = fromLeft ? EXIT_RIGHT : EXIT_LEFT;
-      p.speed *= 1.1;
+      const c = add(fromLeft ? EXIT_LEFT : EXIT_RIGHT);
+      c.fig.hasCup = Math.random() < 0.5;
+      c.state = 'pass';
+      c.target = fromLeft ? EXIT_RIGHT : EXIT_LEFT;
+      c.speed *= 1.1;
       return;
     }
-    if (queue.length >= QUEUE_X.length) return;
-    joinQueue(addPerson(EXIT_LEFT));
+    if (queue.length < QUEUE_X.length) joinQueue(add(EXIT_LEFT));
   };
 
-  // --- Opening scene, close to the still frame ---
+  // --- Opening scene ---
   {
-    const a = addPerson(540, { coat: 'short', hair: 'pony' });
+    const a = add(QUEUE_X[0]);
     queue.push(a);
     a.state = 'waitDrink';
     machine.queue.push(a);
-    const b = addPerson(470, { coat: 'short', hair: 'short', tote: true });
+    const b = add(QUEUE_X[1]);
     queue.push(b);
     b.state = 'queue';
-    const c = addPerson(262, { coat: 'long', hair: 'bob', tote: false });
-    c.hasCup = true;
+    const c = add(spots[0].x);
+    c.fig.hasCup = true;
     c.state = 'mingle';
     c.timer = rand(7, 10);
     c.spot = spots[0];
     spots[0].who = c;
-    const d = addPerson(1010, { coat: 'long', hair: 'short', tote: false });
-    d.hasCup = true;
+    const d = add(1010);
+    d.fig.hasCup = true;
     leave(d, 'right');
+    d.fig.walking = true;
+    d.fig.phase = 0.9;
   }
 
   // ---------- Loop ----------
   const update = (dt: number) => {
-    // Spawning
     spawnIn -= dt;
-    if (spawnIn <= 0) {
-      spawn();
-      spawnIn = rand(3.4, 5.6);
-    }
+    if (spawnIn <= 0) { spawn(); spawnIn = rand(3.4, 5.6); }
 
-    // Queue positions shuffle forward as people are served
-    queue.forEach((p, i) => {
-      if (p.state === 'walk' || p.state === 'queue') p.target = QUEUE_X[i];
+    queue.forEach((c, i) => {
+      if (c.state === 'walk' || c.state === 'queue') c.target = QUEUE_X[i];
     });
 
     // Counter barista
@@ -373,136 +202,122 @@ export function startCoffeeBar() {
     const front = queue[0];
     if (bar.state === 'idle') {
       if (machine.ready.length) {
-        bar.state = 'fetch';
-        bar.t = 0;
-        bar.who = machine.ready.shift()!;
-        bar.handed = false;
+        bar.state = 'fetch'; bar.t = 0; bar.who = machine.ready.shift()!; bar.handed = false;
       } else if (front && front.state === 'queue' && !front.walking && front.x === QUEUE_X[0]) {
-        bar.state = 'taking';
-        bar.t = 0;
-        bar.who = front;
-        front.state = 'order';
+        bar.state = 'taking'; bar.t = 0; bar.who = front; front.state = 'order';
       }
     }
     if (bar.state === 'taking') {
-      const nod = Math.sin(bar.t * 14) * 3.5;
-      b2Head.setAttribute('transform', `rotate(${nod.toFixed(2)} 760 274)`);
-      if (bar.t > 1.2) {
+      b2Head.setAttribute('transform', `rotate(${(Math.sin(bar.t * 14) * 3.5).toFixed(2)} 760 274)`);
+      if (bar.who) bar.who.fig.nod = Math.sin(bar.t * 11 + 1) * 2.5;
+      if (bar.t > 1.3) {
         b2Head.removeAttribute('transform');
-        bar.who!.state = 'waitDrink';
-        machine.queue.push(bar.who!);
-        bar.state = 'idle';
-        bar.who = null;
+        if (bar.who) { bar.who.fig.nod = 0; bar.who.state = 'waitDrink'; machine.queue.push(bar.who); }
+        bar.state = 'idle'; bar.who = null;
       }
     } else if (bar.state === 'fetch') {
       setB2('right', false, false);
       if (bar.t > 0.55) {
-        bar.state = 'hand';
-        bar.t = 0;
+        bar.state = 'hand'; bar.t = 0;
         setB2('left', true, true);
-        if (bar.who) bar.who.pose = 'reach';
+        if (bar.who) bar.who.reaching = true;
       }
     } else if (bar.state === 'hand') {
-      if (!bar.handed && bar.t > 0.55 && bar.who) {
-        // The cup changes hands
+      if (!bar.handed && bar.t > 0.6 && bar.who) {
         bar.handed = true;
         b2Cup.style.display = 'none';
-        bar.who.hasCup = true;
+        bar.who.fig.hasCup = true;
         bar.who.state = 'receive';
         bar.who.timer = 0.35;
       }
-      if (bar.t > 0.8) {
-        setB2('left', false, false);
-        bar.state = 'idle';
-        bar.who = null;
-      }
+      if (bar.t > 0.85) { setB2('left', false, false); bar.state = 'idle'; bar.who = null; }
     }
 
-    // Machine barista
-    if (!machine.busy && machine.queue.length) {
-      machine.busy = machine.queue.shift()!;
-      machine.t = 0;
-    }
+    // La Marzocco barista
+    if (!machine.busy && machine.queue.length) { machine.busy = machine.queue.shift()!; machine.t = 0; }
     if (machine.busy) {
       machine.t += dt;
-      setB1(brewCycle[Math.min(brewCycle.length - 1, Math.floor((machine.t / 2.4) * brewCycle.length))]);
-      b1Head.setAttribute('transform', `rotate(${(Math.sin(machine.t * 5) * 2).toFixed(2)} 953 276)`);
-      b1Steam.style.opacity = String(0.5 + 0.5 * Math.abs(Math.sin(machine.t * 9)));
-      if (machine.t > 2.4) {
-        machine.ready.push(machine.busy);
-        machine.busy = null;
-        setB1('shot');
-      }
-    } else {
-      setB1('shot');
-    }
+      b1Pose = brewCycle[Math.min(brewCycle.length - 1, Math.floor((machine.t / BREW_TIME) * brewCycle.length))];
+      if (machine.t > BREW_TIME) { machine.ready.push(machine.busy); machine.busy = null; }
+    } else b1Pose = 'idle';
+    const k = Math.min(1, dt * 14);
+    B1_TARGETS[b1Pose].forEach((t, i) => {
+      b1Hands[i].x += (t.x - b1Hands[i].x) * k;
+      b1Hands[i].y += (t.y - b1Hands[i].y) * k;
+    });
+    b1.arms = { kind: 'target', near: b1.toLocal(b1Hands[0]), far: b1.toLocal(b1Hands[1]) };
+    b1.nod = b1Pose === 'idle' ? 0 : Math.sin(machine.t * 5) * 2;
+    b1.render();
+    jug.style.display = b1Pose === 'steam' ? '' : 'none';
+    jug.setAttribute('transform', `translate(${b1.handWorld.x.toFixed(1)} ${b1.handWorld.y.toFixed(1)})`);
+    steam.style.display = b1Pose === 'steam' ? '' : 'none';
+    steam.style.opacity = String(0.4 + 0.6 * Math.abs(Math.sin(machine.t * 9)));
+    pour.style.display = b1Pose === 'shot' ? '' : 'none';
 
     // Seated customer
     seat.t -= dt;
     if (seat.t <= 0) {
       seat.sipping = !seat.sipping;
-      seatArm.setAttribute('d', seat.sipping ? SEAT_SIP : SEAT_HOLD);
-      seatCup.setAttribute('transform', seat.sipping ? 'translate(14 -50)' : '');
+      seated.arms = { kind: seat.sipping ? 'sip' : 'hold' };
       seat.t = seat.sipping ? rand(0.9, 1.3) : rand(3.5, 6.5);
     }
+    seated.render();
 
     // Customers
-    for (const p of people) {
-      const arrived = p.step(dt);
+    const chatting = spots[1].who?.state === 'mingle' && spots[2].who?.state === 'mingle';
+    for (const c of people) {
+      const arrived = c.step(dt);
+      const fig = c.fig;
 
-      // Sipping while holding a drink and standing still
-      if (p.hasCup && !p.walking && (p.state === 'mingle' || p.state === 'queue')) {
-        if (p.sipLeft > 0) {
-          p.sipLeft -= dt;
-          p.pose = 'sip';
-          if (p.sipLeft <= 0) p.pose = 'down';
+      if (fig.hasCup && !c.walking && c.state === 'mingle') {
+        if (c.sipLeft > 0) {
+          c.sipLeft -= dt;
+          if (c.sipLeft <= 0) c.sipLeft = 0;
         } else {
-          p.nextSip -= dt;
-          if (p.nextSip <= 0) {
-            p.sipLeft = rand(0.7, 1.1);
-            p.nextSip = rand(2.5, 5);
-          }
+          c.nextSip -= dt;
+          if (c.nextSip <= 0) { c.sipLeft = rand(0.7, 1.1); c.nextSip = rand(2.5, 5); }
         }
       }
 
-      switch (p.state) {
+      switch (c.state) {
         case 'walk':
-          if (arrived || !p.walking) p.state = 'queue';
+          if (arrived || !c.walking) c.state = 'queue';
           break;
         case 'receive':
-          p.timer -= dt;
-          if (p.timer <= 0) {
-            p.pose = 'down';
-            queue.splice(queue.indexOf(p), 1);
-            afterDrink(p);
+          c.timer -= dt;
+          if (c.timer <= 0) {
+            c.reaching = false;
+            queue.splice(queue.indexOf(c), 1);
+            afterDrink(c);
           }
           break;
         case 'toSpot':
-          if (arrived || !p.walking) {
-            p.state = 'mingle';
-            p.timer = rand(6, 11);
-          }
+          if (arrived || !c.walking) { c.state = 'mingle'; c.timer = rand(6, 11); }
           break;
         case 'mingle':
-          if (!p.walking && p.spot) p.dir = p.spot.dir;
-          p.timer -= dt;
-          if (p.timer <= 0) leave(p, p.x < 600 ? 'left' : 'right');
+          if (!c.walking && c.spot) fig.dir = c.spot.dir;
+          fig.nod = chatting && c.spot !== spots[0] ? Math.sin(performance.now() / 160 + c.spot!.x) * 1.8 : 0;
+          c.timer -= dt;
+          if (c.timer <= 0) leave(c, c.x < 600 ? 'left' : 'right');
           break;
         case 'leave':
         case 'pass':
-          if (!p.walking) p.remove(); // reached the edge
+          if (!c.walking) c.remove();
           break;
       }
-      // Queuers face the counter
-      if ((p.state === 'queue' || p.state === 'order' || p.state === 'waitDrink' || p.state === 'receive') && !p.walking) {
-        p.dir = 1;
-      }
-      if (!p.done) p.render();
+      if (['queue', 'order', 'waitDrink', 'receive'].includes(c.state) && !c.walking) fig.dir = 1;
+
+      fig.arms = c.reaching
+        ? { kind: 'target', near: fig.toLocal(BARISTA_HAND) }
+        : c.sipLeft > 0 ? { kind: 'sip' } : { kind: 'swing' };
+      if (!c.done) fig.render();
     }
     for (let i = people.length - 1; i >= 0; i--) if (people[i].done) people.splice(i, 1);
   };
 
-  // Run only while the sketch is on screen.
+  update(0);
+  if (still) return; // reduced motion: keep the detailed opening frame, no movement
+
   let running = false;
   let last = 0;
   const frame = (now: number) => {
@@ -512,22 +327,14 @@ export function startCoffeeBar() {
     update(dt);
     requestAnimationFrame(frame);
   };
-  const io = new IntersectionObserver(
-    ([entry]) => {
-      if (entry.isIntersecting && !running) {
-        running = true;
-        last = performance.now();
-        requestAnimationFrame(frame);
-      } else if (!entry.isIntersecting) {
-        running = false;
-      }
-    },
-    { threshold: 0 },
-  );
+  const io = new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting && !running) {
+      running = true;
+      last = performance.now();
+      requestAnimationFrame(frame);
+    } else if (!entry.isIntersecting) running = false;
+  });
   io.observe(svg);
-
-  // Draw the opening frame straight away so nothing pops in.
-  update(0);
 
   // ?sketch-debug exposes a manual stepper for checking the choreography.
   if (new URLSearchParams(location.search).has('sketch-debug')) {
@@ -540,8 +347,8 @@ export function startCoffeeBar() {
       state: () => ({
         bar: bar.state,
         machine: machine.busy ? 'brewing' : 'idle',
-        queue: queue.map((p) => `${p.state}@${Math.round(p.x)}`),
-        people: people.map((p) => `${p.state}@${Math.round(p.x)}${p.hasCup ? '+cup' : ''}`),
+        queue: queue.map((c) => `${c.state}@${Math.round(c.x)}`),
+        people: people.map((c) => `${c.state}@${Math.round(c.x)}${c.fig.hasCup ? '+cup' : ''}`),
       }),
     };
   }

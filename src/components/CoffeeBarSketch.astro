@@ -10,6 +10,9 @@ const cup = cupMarkup;
 const smallCup = smallCupMarkup;
 
 const svg = `
+  <!-- Where the back wall meets the floor -->
+  <line class="ln faint" x1="0" y1="560" x2="1200" y2="560"/>
+
   <!-- Wall sign -->
   <text class="sign" x="609" y="196" font-size="34" letter-spacing="17">THE MESS</text>
   <line class="ln faint" x1="560" y1="214" x2="640" y2="214"/>
@@ -28,31 +31,47 @@ const svg = `
     <path class="ln" d="M964,300 L972,330 M930,350 L968,350"/>
     <path id="b1-arm1" class="ln" d="M960,298 C972,316 978,336 988,350"/>
     <path id="b1-arm2" class="ln" d="M948,302 C954,330 962,352 974,362 L986,364"/>
-    <path id="b1-jug" class="ln o" d="M980,366 L994,366 L992,384 L982,384 Z" style="display:none"/>
+  </g>
+  <g id="cb-staff"></g>
+  <g id="b1-jug" style="display:none">
+    <path class="ln o" d="M-7,2 L8,2 L7,20 L-6,20 Z"/>
+    <path class="ln" d="M8,2 l5,-3 M-7,6 q-6,1 -6,6 q0,5 6,5"/>
+    <path class="ln faint" d="M-6,9 L7,9"/>
   </g>
 
   <!-- Barista two: behind the central unit, handing a cup across -->
   <g id="b2" transform="translate(1464 0) scale(-1 1)">
     <path class="ln o" d="M754,282 C732,284 722,294 718,316 L714,420 L806,420 L802,316 C798,294 788,284 766,282 Z"/>
+    <path class="ln" d="M752,283 L747,292 L756,290 L760,296 L764,290 L773,292 L768,283"/>
+    <path class="ln faint" d="M760,296 L760,330 M758,304 l2,0 M758,316 l2,0"/>
     <g id="b2-head">
-      <path class="ln" d="M754,274 L754,283 M766,274 L766,283"/>
+      <path class="ln" d="M754,272 L754,283 M766,272 L766,283"/>
+      <path class="ln o" d="M746,252 q-4,0 -4,5 q0,5 4,5 M774,252 q4,0 4,5 q0,5 -4,5"/>
       <ellipse class="ln o" cx="760" cy="257" rx="14" ry="17"/>
       <path class="ln o" d="M746,254 Q746,236 762,236 Q777,237 775,254 Q770,244 758,245 Q750,246 746,254 Z"/>
+      <path class="ln faint" d="M752,243 q6,-4 13,-2 M756,239 q6,-2 12,1 M749,268 q11,8 22,0"/>
     </g>
-    <path class="ln" d="M744,300 L738,330 L782,330 L776,300"/>
-    <path class="ln" d="M738,330 L736,410 M782,330 L784,410"/>
-    <path class="ln faint" d="M748,356 L772,356 L772,376 L748,376 Z"/>
+    <path class="ln" d="M754,284 L744,300 M766,284 L776,300"/>
+    <path class="ln o" d="M744,300 L738,330 L736,412 L784,412 L782,330 L776,300 Z"/>
+    <path class="ln faint" d="M748,356 L772,356 L772,376 L748,376 Z M766,350 L766,364 M760,356 L760,376"/>
+    <path class="ln" d="M738,330 L782,330 M736,334 l-10,4 M736,334 l-8,10"/>
     <g id="b2-reach">
-      <path class="ln" d="M800,312 C812,326 818,336 822,340 L848,336"/>
-      <ellipse class="ln o" cx="852" cy="335" rx="5" ry="4"/>
+      <path class="ln o" d="M796,306 C808,320 816,332 820,338 L846,331 L848,340 L818,348 C810,338 802,326 794,316 Z"/>
+      <path class="ln" d="M813,324 l9,-5 M816,330 l9,-5 M838,333 l3,9"/>
+      <ellipse class="ln o" cx="852" cy="335" rx="5.5" ry="4.5"/>
     </g>
-    <path id="b2-idle" class="ln" d="M800,312 C808,338 810,366 808,396" style="display:none"/>
+    <g id="b2-idle" style="display:none">
+      <path class="ln o" d="M796,306 C806,334 808,362 806,392 L816,392 C818,362 814,330 806,306 Z"/>
+      <path class="ln" d="M802,340 l11,-1 M803,345 l11,-1"/>
+      <ellipse class="ln o" cx="811" cy="397" rx="6" ry="4"/>
+    </g>
   </g>
   <g id="b2-cup">${cup(606, 343)}</g>
 
   <!-- Central unit: one plain rectangle -->
   <path class="ln o" d="M384,410 L384,600 L796,600 L796,410 Z"/>
   <path class="ln o" d="M376,400 L804,400 L804,410 L376,410 Z"/>
+  <path class="ln faint" d="M384,416 L796,416 M384,594 L796,594"/>
   <path class="ln o" d="M774,399 L770,340 L796,340 L792,399 Z"/>
   <path class="ln faint" d="M772,352 L794,352 M772,364 L794,364 M773,376 L793,376 M773,388 L793,388"/>
 
@@ -65,22 +84,34 @@ const svg = `
   <!-- Separate unit on the right with the La Marzocco -->
   <path class="ln o" d="M892,406 L892,600 L1072,600 L1072,406 Z"/>
   <path class="ln o" d="M884,399 L1080,399 L1080,406 L884,406 Z"/>
+  <path class="ln faint" d="M892,412 L1072,412 M892,594 L1072,594"/>
   <g>
     <!-- La Marzocco side-on: back against the wall, group heads facing into the bar -->
-    <path class="ln" d="M1012,399 L1012,394 M1064,399 L1064,394"/>
+    <path class="ln" d="M1010,399 L1010,393 L1016,393 L1016,399 M1060,399 L1060,393 L1066,393 L1066,399"/>
     <path class="ln o" d="M1004,394 L1004,334 Q1004,328 1010,328 L1066,328 Q1072,328 1072,334 L1072,394 Z"/>
-    <path class="ln" d="M1004,346 L1072,346 M1004,368 L1072,368"/>
-    <path class="ln faint" d="M1016,328 L1016,394 M1060,328 L1060,394"/>
-    <path class="ln" d="M1008,322 L1068,322 M1008,322 L1008,328 M1068,322 L1068,328"/>
-    ${smallCup(1026, 322)}${smallCup(1048, 322)}
-    <path class="ln o" d="M1004,352 L992,352 L990,362 L1004,362 Z"/>
-    <path class="ln" d="M990,364 L960,368 M988,362 L996,362"/>
-    <path class="ln faint" d="M992,364 L992,374 M996,364 L996,374"/>
-    <path class="ln o" d="M1004,386 L986,386 L986,394 L1004,394 Z"/>
-    ${smallCup(994, 386)}
-    <path class="ln" d="M1004,338 L998,338 L994,376"/>
-    <circle class="ln" cx="1004" cy="334" r="2.5"/>
+    <path class="ln" d="M1004,345 L1072,345 M1004,369 L1072,369"/>
+    <path class="ln faint" d="M1010,349 L1066,349 L1066,365 L1010,365 Z"/>
+    <text class="brand-text" x="1038" y="359.6" font-size="6.4" letter-spacing="1.2">LA MARZOCCO</text>
+    <path class="ln faint" d="M1014,374 L1014,388 M1020,374 L1020,388 M1026,374 L1026,388 M1032,374 L1032,388 M1038,374 L1038,388 M1044,374 L1044,388 M1050,374 L1050,388 M1056,374 L1056,388 M1062,374 L1062,388"/>
+    <path class="ln faint" d="M1010,333 L1066,333 M1010,340 L1066,340"/>
+    <path class="ln" d="M1007,318 L1069,318 M1007,322 L1069,322 M1007,318 L1007,328 M1069,318 L1069,328 M1022,318 L1022,322 M1038,318 L1038,322 M1054,318 L1054,322"/>
+    ${smallCup(1016, 318)}${smallCup(1031, 318)}${smallCup(1046, 318)}${smallCup(1061, 318)}
+    <path class="ln o" d="M1004,349 L995,349 L991,353 L991,360 L1004,360 Z"/>
+    <path class="ln faint" d="M993,356 L1004,356 M995,349 L995,360"/>
+    <path class="ln o" d="M988,361 L1001,361 L999,367 L990,367 Z"/>
+    <path class="ln o" d="M990,362 L961,366 L960,370 L990,366 Z"/>
+    <circle class="ln" cx="958" cy="368" r="2.2"/>
+    <path class="ln" d="M992,367 L992,371 M997,367 L997,371"/>
+    <path class="ln o" d="M1004,384 L983,384 L983,394 L1004,394 Z"/>
+    <path class="ln faint" d="M986,384 L986,394 M989,384 L989,394 M992,384 L992,394 M995,384 L995,394 M998,384 L998,394 M1001,384 L1001,394"/>
+    <path class="ln" d="M987,385 L1003,385"/>
+    ${smallCup(995, 384)}
+    <path class="ln" d="M1004,338 L999,338 L999,342 L995,372 M998,342 L994,372"/>
+    <path class="ln" d="M994,372 l1,5 l2,0 l1,-5"/>
+    <circle class="ln o" cx="1004" cy="334" r="2.8"/><path class="ln" d="M1004,331 l0,-4 M1001,327 l6,0"/>
+    <path class="ln o" d="M1066,374 L1070,374 L1070,381 L1066,381 Z"/>
   </g>
+  <path id="b1-pour" class="ln faint" d="M993,371 L994,378 M997,371 L996,378" style="display:none"/>
   <path id="b1-steam" class="ln faint" d="M986,358 q-4,-6 0,-12 q4,-6 0,-12 M993,356 q-3,-5 0,-10 q3,-5 0,-10" style="display:none"/>
 
   <line class="ln" x1="0" y1="600" x2="1200" y2="600"/>
@@ -94,6 +125,7 @@ const svg = `
   <path class="ln faint" d="M86,546 L94,540 L148,540 L140,546 M148,540 L148,594 L140,600"/>
 
   <!-- Seated customer facing the table -->
+  <g id="seat-person">
   <g>
     <path class="ln o" d="M100,476 C95,500 95,524 98,546 L134,546 C134,520 132,496 126,476 Q113,466 100,476 Z"/>
     <path class="ln o" d="M102,530 L74,528 L72,544 L102,546 Z"/>
@@ -107,6 +139,7 @@ const svg = `
     <path class="ln" d="M126,486 C132,510 128,526 120,532"/>
   </g>
   <g id="seat-cup">${cup(84, 520, 0.75)}</g>
+  </g>
   </g>
 
   <g id="cb-crowd">

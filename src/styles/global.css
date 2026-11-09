@@ -522,7 +522,7 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
 .sketch .ln {
   fill: none;
   stroke: var(--sketch);
-  stroke-width: 0.75;
+  stroke-width: 0.7;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
@@ -558,4 +558,9 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
     transition: clip-path 2.6s cubic-bezier(0.65, 0, 0.35, 1) 150ms;
   }
   .js .draw.is-visible svg { clip-path: inset(0 0 0 0); }
+}
+.sketch .brand-text {
+  fill: var(--sketch);
+  font-family: Georgia, 'Times New Roman', serif;
+  text-anchor: middle;
 }
