@@ -1,27 +1,13 @@
 ---
 // Fine-line sketch of a busy coffee bar at THE MESS.
-// Pure SVG, drawn in the logo grey. Shapes with class "o" are filled with the page
+// Pure SVG in white line. The people are animated by src/scripts/coffee-bar.ts;
+// this markup is also the still frame shown without JS or with reduced motion.
+import { cupMarkup, smallCupMarkup } from '../lib/sketch';
+// Shapes with class "o" are filled with the page
 // background so figures in front occlude what's behind them, like a pen drawing.
 
-const cup = (cx: number, by: number, s = 1) => {
-  const w = 11 * s, b = 8 * s, h = 30 * s;
-  return `
-  <g class="cup">
-    <path class="ln o" d="M${cx - w},${by - h} L${cx + w},${by - h} L${cx + b},${by} L${cx - b},${by} Z"/>
-    <path class="ln o" d="M${cx - w - 1},${by - h} L${cx + w + 1},${by - h} L${cx + w},${by - h - 4 * s} L${cx - w},${by - h - 4 * s} Z"/>
-    <path class="ln" d="M${cx - w + 2},${by - h - 4 * s} L${cx - w + 3},${by - h - 7 * s} L${cx + w - 3},${by - h - 7 * s} L${cx + w - 2},${by - h - 4 * s}"/>
-    <path class="ln faint" d="M${cx - w + 0.6},${by - h + 7 * s} L${cx + w - 0.6},${by - h + 7 * s} M${cx - b - 1},${by - 7 * s} L${cx + b + 1},${by - 7 * s}"/>
-    <text class="cup-text" x="${cx + 0.4 * s}" y="${by - 16.5 * s}" font-size="${4.4 * s}">THE</text>
-    <text class="cup-text" x="${cx + 0.4 * s}" y="${by - 10.5 * s}" font-size="${4.4 * s}">MESS</text>
-  </g>`;
-};
-
-const croissant = (x: number, y: number) => `
-  <path class="ln o" d="M${x - 13},${y} Q${x - 11},${y - 11} ${x},${y - 11} Q${x + 11},${y - 11} ${x + 13},${y} Q${x},${y - 4} ${x - 13},${y} Z"/>
-  <path class="ln faint" d="M${x - 5},${y - 10} Q${x - 7},${y - 5} ${x - 6},${y - 2} M${x + 5},${y - 10} Q${x + 7},${y - 5} ${x + 6},${y - 2}"/>`;
-
-const smallCup = (x: number, y: number) =>
-  `<path class="ln o" d="M${x - 6},${y - 9} L${x + 6},${y - 9} L${x + 5},${y} L${x - 5},${y} Z"/><path class="ln" d="M${x + 6},${y - 7} q5,1 4,5 l-4,0"/>`;
+const cup = cupMarkup;
+const smallCup = smallCupMarkup;
 
 const svg = `
   <!-- Wall sign -->
@@ -30,31 +16,39 @@ const svg = `
   <text class="sign-sub" x="603" y="232" font-size="8.5" letter-spacing="6">CONCEPT STORE</text>
 
   <!-- Barista one: working the La Marzocco against the right-hand wall -->
-  <g>
+  <g id="b1">
     <!-- side-on, facing the machine on the right-hand wall -->
     <path class="ln o" d="M944,282 C932,286 928,300 928,320 L926,420 L970,420 L968,320 C968,300 964,288 956,282 Z"/>
-    <path class="ln" d="M948,276 L948,284 M956,276 L956,284"/>
-    <ellipse class="ln o" cx="953" cy="260" rx="13" ry="17"/>
-    <path class="ln o" d="M940,262 Q938,242 953,242 Q967,242 966,256 Q958,248 948,250 Q942,254 940,262 Z"/>
-    <circle class="ln o" cx="938" cy="250" r="7"/>
+    <g id="b1-head">
+      <path class="ln" d="M948,276 L948,284 M956,276 L956,284"/>
+      <circle class="ln o" cx="938" cy="250" r="7"/>
+      <ellipse class="ln o" cx="953" cy="260" rx="13" ry="17"/>
+      <path class="ln o" d="M940,262 Q938,242 953,242 Q967,242 966,256 Q958,248 948,250 Q942,254 940,262 Z"/>
+    </g>
     <path class="ln" d="M964,300 L972,330 M930,350 L968,350"/>
-    <path class="ln" d="M960,298 C972,316 978,336 988,350"/>
-    <path class="ln" d="M948,302 C954,330 962,352 974,362 L986,364"/>
+    <path id="b1-arm1" class="ln" d="M960,298 C972,316 978,336 988,350"/>
+    <path id="b1-arm2" class="ln" d="M948,302 C954,330 962,352 974,362 L986,364"/>
+    <path id="b1-jug" class="ln o" d="M980,366 L994,366 L992,384 L982,384 Z" style="display:none"/>
   </g>
 
   <!-- Barista two: behind the central unit, handing a cup across -->
-  <g transform="translate(1464 0) scale(-1 1)">
+  <g id="b2" transform="translate(1464 0) scale(-1 1)">
     <path class="ln o" d="M754,282 C732,284 722,294 718,316 L714,420 L806,420 L802,316 C798,294 788,284 766,282 Z"/>
-    <path class="ln" d="M754,274 L754,283 M766,274 L766,283"/>
-    <ellipse class="ln o" cx="760" cy="257" rx="14" ry="17"/>
-    <path class="ln o" d="M746,254 Q746,236 762,236 Q777,237 775,254 Q770,244 758,245 Q750,246 746,254 Z"/>
+    <g id="b2-head">
+      <path class="ln" d="M754,274 L754,283 M766,274 L766,283"/>
+      <ellipse class="ln o" cx="760" cy="257" rx="14" ry="17"/>
+      <path class="ln o" d="M746,254 Q746,236 762,236 Q777,237 775,254 Q770,244 758,245 Q750,246 746,254 Z"/>
+    </g>
     <path class="ln" d="M744,300 L738,330 L782,330 L776,300"/>
     <path class="ln" d="M738,330 L736,410 M782,330 L784,410"/>
     <path class="ln faint" d="M748,356 L772,356 L772,376 L748,376 Z"/>
-    <path class="ln" d="M800,312 C812,326 818,336 822,340 L848,336"/>
-    <ellipse class="ln o" cx="852" cy="335" rx="5" ry="4"/>
+    <g id="b2-reach">
+      <path class="ln" d="M800,312 C812,326 818,336 822,340 L848,336"/>
+      <ellipse class="ln o" cx="852" cy="335" rx="5" ry="4"/>
+    </g>
+    <path id="b2-idle" class="ln" d="M800,312 C808,338 810,366 808,396" style="display:none"/>
   </g>
-  ${cup(606, 343)}
+  <g id="b2-cup">${cup(606, 343)}</g>
 
   <!-- Central unit: one plain rectangle -->
   <path class="ln o" d="M384,410 L384,600 L796,600 L796,410 Z"/>
@@ -87,6 +81,7 @@ const svg = `
     <path class="ln" d="M1004,338 L998,338 L994,376"/>
     <circle class="ln" cx="1004" cy="334" r="2.5"/>
   </g>
+  <path id="b1-steam" class="ln faint" d="M986,358 q-4,-6 0,-12 q4,-6 0,-12 M993,356 q-3,-5 0,-10 q3,-5 0,-10" style="display:none"/>
 
   <line class="ln" x1="0" y1="600" x2="1200" y2="600"/>
 
@@ -108,12 +103,13 @@ const svg = `
     <ellipse class="ln o" cx="112" cy="451" rx="12" ry="15"/>
     <path class="ln o" d="M100,452 Q99,436 113,436 Q126,436 124,452 Q120,442 112,443 Q104,444 100,452 Z"/>
     <path class="ln" d="M120,437 Q130,440 128,452"/>
-    <path class="ln" d="M106,484 C98,502 96,514 88,512"/>
+    <path id="seat-arm" class="ln" d="M106,484 C98,502 96,514 88,512"/>
     <path class="ln" d="M126,486 C132,510 128,526 120,532"/>
   </g>
-  ${cup(84, 520, 0.75)}
+  <g id="seat-cup">${cup(84, 520, 0.75)}</g>
   </g>
 
+  <g id="cb-crowd">
   <!-- Customer one: profile, long coat, sipping -->
   <g transform="translate(236 0)">
     <path class="ln o" d="M-20,488 L-18,592 L-8,592 L-6,488 Z M6,488 L8,592 L18,592 L20,488 Z"/>
@@ -166,11 +162,17 @@ const svg = `
     <path class="ln" d="M32,334 C44,368 46,398 42,422"/>
   </g>
   ${cup(1186, 442)}
+  </g>
 `;
 ---
 <figure class="sketch">
   <svg viewBox="0 130 1200 480" role="img" aria-labelledby="sketch-title" preserveAspectRatio="xMidYMid meet">
-    <title id="sketch-title">Line drawing of the coffee bar at THE MESS: two baristas at work beneath the wall sign, customers waiting and leaving with THE MESS takeaway cups.</title>
+    <title id="sketch-title">Animated line drawing of the coffee bar at THE MESS: baristas making coffee and serving customers, who queue, chat and leave with THE MESS takeaway cups.</title>
     <Fragment set:html={svg} />
   </svg>
 </figure>
+
+<script>
+  import { startCoffeeBar } from '../scripts/coffee-bar';
+  startCoffeeBar();
+</script>
