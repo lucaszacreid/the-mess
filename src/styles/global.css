@@ -517,11 +517,11 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
 .sketch-section {
   padding: clamp(48px, 8vw, 120px) var(--gutter) clamp(24px, 4vw, 64px);
 }
-.sketch { margin: 0 auto; max-width: 1180px; }
+.sketch { --sketch: #ffffff; margin: 0 auto; max-width: 1180px; }
 .sketch svg { display: block; width: 100%; height: auto; overflow: visible; }
 .sketch .ln {
   fill: none;
-  stroke: var(--fg);
+  stroke: var(--sketch);
   stroke-width: 0.75;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -531,7 +531,7 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
 .sketch .faint { stroke-opacity: 0.4; }
 .sketch .sign {
   fill: none;
-  stroke: var(--fg);
+  stroke: var(--sketch);
   stroke-width: 0.75;
   vector-effect: non-scaling-stroke;
   font-family: var(--font-mark);
@@ -539,13 +539,13 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
   text-anchor: middle;
 }
 .sketch .sign-sub {
-  fill: var(--fg);
+  fill: var(--sketch);
   font-family: var(--font-body);
   font-weight: 300;
   text-anchor: middle;
 }
 .sketch .cup-text {
-  fill: var(--fg);
+  fill: var(--sketch);
   font-family: var(--font-mark);
   font-weight: 700;
   letter-spacing: 0.6px;
@@ -559,4 +559,3 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
   }
   .js .draw.is-visible svg { clip-path: inset(0 0 0 0); }
 }
-.sketch .sketch-ghost { opacity: 0.35; }
