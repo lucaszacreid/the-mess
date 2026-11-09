@@ -6,8 +6,10 @@ import 'lenis/dist/lenis.css';
 import '../styles/global.css';
 import CoffeeBarSketch from '../components/CoffeeBarSketch.astro';
 
-const title = 'THE MESS — Coffee, Interiors & Wellbeing · Glasgow';
-const description = 'THE MESS — Coffee, interiors & wellbeing. 37 Otago Street, Glasgow G12 8JJ';
+// Search: written for people looking for a coffee shop in Glasgow's West End.
+const title = "THE MESS | Coffee Shop & Concept Store, Glasgow West End";
+const description =
+  'Speciality coffee and artisan pastries, curated interiors, reformer pilates and wellbeing under one roof. 37 Otago Street, Glasgow G12 8JJ. Open daily 8am–6pm.';
 const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
 const ogImage = `${site}/og.jpg`;
 const year = new Date().getFullYear();
@@ -18,6 +20,21 @@ const phone = '+44 7856 050231';
 const phoneHref = '+447856050231';
 // Loyalty card sign-up link from the loyalty service. The link only appears on the site once this is set.
 const loyaltyUrl = '';
+// Google Business Profile "write a review" link (from the profile's "Ask for reviews" button). Hidden until set.
+const googleReviewUrl = '';
+// Google Search Console HTML-tag verification code (just the content="…" value). Hidden until set.
+const googleVerification = '';
+
+const business = {
+  name: 'The Mess Concept',
+  brand: 'THE MESS',
+  street: '37 Otago Street',
+  locality: 'Glasgow',
+  region: 'Scotland',
+  postcode: 'G12 8JJ',
+  lat: 55.8747,
+  lng: -4.2816,
+};
 
 const nav = [
   ['about', 'About'],
@@ -38,32 +55,81 @@ const offerings = [
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+const address = {
+  '@type': 'PostalAddress',
+  streetAddress: business.street,
+  addressLocality: business.locality,
+  addressRegion: business.region,
+  postalCode: business.postcode,
+  addressCountry: 'GB',
+};
+const hours = [{ '@type': 'OpeningHoursSpecification', dayOfWeek: days, opens: '08:00', closes: '18:00' }];
+const bizId = `${site}/#business`;
+const department = (type: string, name: string, desc: string) => ({
+  '@type': type,
+  '@id': `${site}/#${name.toLowerCase()}`,
+  name: `${business.name} ${name}`,
+  description: desc,
+  address,
+  telephone: phoneHref,
+  openingHoursSpecification: hours,
+  url: `${site}/#${name.toLowerCase()}`,
+  parentOrganization: { '@id': bizId },
+});
+
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': ['CafeOrCoffeeShop', 'LocalBusiness'],
-  name: 'THE MESS',
-  legalName: 'The Mess Concept',
-  description,
-  url: site + '/',
-  image: ogImage,
-  servesCuisine: 'Coffee',
-  address: {
-    '@type': 'PostalAddress',
-    streetAddress: '37 Otago Street',
-    addressLocality: 'Glasgow',
-    postalCode: 'G12 8JJ',
-    addressCountry: 'GB',
-  },
-  hasMap: directions,
-  email,
-  telephone: phoneHref,
-  sameAs: [instagram],
-  openingHoursSpecification: [
+  '@graph': [
     {
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: days,
-      opens: '08:00',
-      closes: '18:00',
+      '@type': 'WebSite',
+      '@id': `${site}/#website`,
+      url: `${site}/`,
+      name: business.brand,
+      alternateName: business.name,
+      inLanguage: 'en-GB',
+      publisher: { '@id': bizId },
+    },
+    {
+      '@type': 'WebPage',
+      '@id': `${site}/#webpage`,
+      url: `${site}/`,
+      name: title,
+      description,
+      inLanguage: 'en-GB',
+      isPartOf: { '@id': `${site}/#website` },
+      about: { '@id': bizId },
+      primaryImageOfPage: ogImage,
+    },
+    {
+      '@type': ['CafeOrCoffeeShop', 'LocalBusiness'],
+      '@id': bizId,
+      name: business.name,
+      alternateName: [business.brand, 'The Mess Glasgow'],
+      slogan: 'Coffee, Interiors, Wellbeing',
+      description:
+        "A concept store in Glasgow's West End bringing together speciality coffee and artisan pastries, curated homeware and interior design services, reformer pilates and wellbeing, including reiki.",
+      url: `${site}/`,
+      image: [ogImage],
+      logo: `${site}/logo.png`,
+      telephone: phoneHref,
+      email,
+      address,
+      geo: { '@type': 'GeoCoordinates', latitude: business.lat, longitude: business.lng },
+      hasMap: directions,
+      areaServed: ['Hillhead', 'West End, Glasgow', 'Glasgow'],
+      openingHoursSpecification: hours,
+      foundingDate: '2026-11-15',
+      priceRange: '££',
+      currenciesAccepted: 'GBP',
+      servesCuisine: ['Coffee', 'Pastries'],
+      acceptsReservations: false,
+      keywords: 'coffee shop, speciality coffee, cafe, pastries, concept store, interiors, homeware, interior design, reformer pilates, wellbeing, reiki, West End, Glasgow',
+      sameAs: [instagram],
+      department: [
+        department('HomeGoodsStore', 'Interiors', 'Furniture, objects and homeware sourced from around the world in limited quantities, plus interior design services.'),
+        department('HealthClub', 'Pilates', 'Small mat and reformer pilates classes.'),
+        department('HealthAndBeautyBusiness', 'Wellness', 'Wellbeing treatments and sessions, including reiki.'),
+      ],
     },
   ],
 };
@@ -77,6 +143,13 @@ const jsonLd = {
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#0A0A0A" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="geo.region" content="GB-GLG" />
+    <meta name="geo.placename" content="Glasgow" />
+    <meta name="geo.position" content={`${business.lat};${business.lng}`} />
+    <meta name="ICBM" content={`${business.lat}, ${business.lng}`} />
+    {googleVerification && <meta name="google-site-verification" content={googleVerification} />}
+    <link rel="sitemap" href="/sitemap.xml" />
     <link rel="canonical" href={site + '/'} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
@@ -90,7 +163,11 @@ const jsonLd = {
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="THE MESS wordmark" />
+    <meta property="og:image:alt" content="THE MESS, coffee shop and concept store on Otago Street, Glasgow" />
+    <meta property="business:contact_data:street_address" content={business.street} />
+    <meta property="business:contact_data:locality" content={business.locality} />
+    <meta property="business:contact_data:postal_code" content={business.postcode} />
+    <meta property="business:contact_data:country_name" content="United Kingdom" />
     <meta property="og:locale" content="en_GB" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
@@ -130,10 +207,10 @@ const jsonLd = {
 
     <main id="main">
       <section class="hero" id="top" aria-label="Introduction">
-        <div class="hero-mark">
-          <h1 class="wordmark">THE MESS</h1>
-          <p class="submark">Concept Store</p>
-        </div>
+        <h1 class="hero-mark">
+          <span class="wordmark">THE MESS</span>
+          <span class="submark">Concept Store</span>
+        </h1>
         <span class="divider" aria-hidden="true"></span>
         <nav class="tagline" aria-label="Explore">
           <a href="#coffee">Coffee</a><span class="sep" aria-hidden="true">-</span><a href="#interiors">Interiors</a><span class="sep sep-mid" aria-hidden="true">-</span><a href="#pilates">Pilates</a><span class="sep" aria-hidden="true">-</span><a href="#wellness">Wellbeing</a>
@@ -200,14 +277,15 @@ const jsonLd = {
         <div class="reveal">
           <h2 class="eyebrow" id="visit-title">Visit</h2>
           <address class="address">
-            <span class="name">The Mess Concept</span>
-            <span class="muted">37 Otago Street</span>
-            <span class="muted">Glasgow G12 8JJ</span>
+            <span class="name">{business.name}</span>
+            <span class="muted">{business.street}</span>
+            <span class="muted">{business.locality} {business.postcode}</span>
             <span class="contact">
               <a href={`mailto:${email}`}>{email}</a>
               <a href={`tel:${phoneHref}`}>{phone}</a>
             </span>
           </address>
+          <p class="local-note">Coffee shop in Glasgow's West End, a short walk from Kelvinbridge Subway.</p>
           <div class="visit-links">
             <a class="text-link" href={directions} target="_blank" rel="noopener noreferrer">
               Get Directions<span class="sr-only"> (opens in a new tab)</span>
@@ -215,6 +293,11 @@ const jsonLd = {
             <a class="text-link" href={instagram} target="_blank" rel="noopener noreferrer">
               Instagram<span class="sr-only"> (opens in a new tab)</span>
             </a>
+            {googleReviewUrl && (
+              <a class="text-link" href={googleReviewUrl} target="_blank" rel="noopener noreferrer">
+                Leave a Review<span class="sr-only"> on Google (opens in a new tab)</span>
+              </a>
+            )}
             {loyaltyUrl && (
               <a class="text-link" href={loyaltyUrl} target="_blank" rel="noopener noreferrer">
                 Loyalty Card<span class="sr-only"> (add to your phone's wallet, opens in a new tab)</span>
@@ -226,7 +309,8 @@ const jsonLd = {
     </main>
 
     <footer class="site-footer">
-      <p>© The Mess Concept {year}</p>
+      <p>{business.name} · {business.street}, {business.locality} {business.postcode} · <a href={`tel:${phoneHref}`}>{phone}</a></p>
+      <p>© {business.name} {year}</p>
     </footer>
 
     <script>

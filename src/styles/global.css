@@ -564,3 +564,17 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
   font-family: Georgia, 'Times New Roman', serif;
   text-anchor: middle;
 }
+
+/* ---------- Local search details ---------- */
+.hero-mark .submark { display: block; }
+.local-note {
+  max-width: 30em;
+  margin: 28px auto 0;
+  padding-left: 0.3em;
+  font-size: 0.625rem;
+  line-height: 2.2;
+  color: var(--fg-dim);
+}
+.site-footer p + p { margin-top: 6px; }
+.site-footer a { transition: color 300ms var(--ease); }
+.site-footer a:hover { color: var(--fg); }
