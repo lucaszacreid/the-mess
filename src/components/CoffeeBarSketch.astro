@@ -23,41 +23,11 @@ const croissant = (x: number, y: number) => `
 const smallCup = (x: number, y: number) =>
   `<path class="ln o" d="M${x - 6},${y - 9} L${x + 6},${y - 9} L${x + 5},${y} L${x - 5},${y} Z"/><path class="ln" d="M${x + 6},${y - 7} q5,1 4,5 l-4,0"/>`;
 
-const bag = (x: number, y: number) =>
-  `<path class="ln o" d="M${x - 10},${y} L${x - 11},${y - 30} L${x - 7},${y - 36} L${x + 7},${y - 36} L${x + 11},${y - 30} L${x + 10},${y} Z"/><path class="ln faint" d="M${x - 11},${y - 30} L${x + 11},${y - 30} M${x - 5},${y - 18} L${x + 5},${y - 18}"/>`;
-
-const jar = (x: number, y: number) =>
-  `<path class="ln o" d="M${x - 9},${y} L${x - 9},${y - 26} Q${x - 9},${y - 30} ${x - 5},${y - 30} L${x + 5},${y - 30} Q${x + 9},${y - 30} ${x + 9},${y - 26} L${x + 9},${y} Z"/><path class="ln" d="M${x - 7},${y - 30} L${x - 7},${y - 34} L${x + 7},${y - 34} L${x + 7},${y - 30}"/>`;
-
-const plant = (x: number, y: number) => `
-  <path class="ln o" d="M${x - 11},${y - 22} L${x + 11},${y - 22} L${x + 8},${y} L${x - 8},${y} Z"/>
-  <path class="ln" d="M${x},${y - 22} Q${x - 4},${y - 44} ${x - 18},${y - 56} M${x},${y - 22} Q${x + 2},${y - 50} ${x + 8},${y - 66} M${x},${y - 22} Q${x + 6},${y - 38} ${x + 22},${y - 46}"/>
-  <path class="ln" d="M${x - 18},${y - 56} q-2,10 8,12 M${x + 8},${y - 66} q8,6 2,14 M${x + 22},${y - 46} q-2,9 -11,8"/>`;
-
 const svg = `
   <!-- Wall sign -->
   <text class="sign" x="609" y="196" font-size="34" letter-spacing="17">THE MESS</text>
   <line class="ln faint" x1="560" y1="214" x2="640" y2="214"/>
   <text class="sign-sub" x="603" y="232" font-size="8.5" letter-spacing="6">CONCEPT STORE</text>
-
-  <!-- Left shelves -->
-  <line class="ln" x1="110" y1="258" x2="320" y2="258"/>
-  <path class="ln faint" d="M128,258 L128,266 M302,258 L302,266"/>
-  ${jar(140, 258)}${jar(166, 258)}${smallCup(200, 258)}${smallCup(220, 258)}${smallCup(210, 249)}${plant(292, 258)}
-  <line class="ln" x1="110" y1="318" x2="320" y2="318"/>
-  <path class="ln faint" d="M128,318 L128,326 M302,318 L302,326"/>
-  ${bag(140, 318)}${bag(168, 318)}${bag(196, 318)}
-
-  <!-- Right shelves -->
-  <line class="ln" x1="880" y1="258" x2="1090" y2="258"/>
-  <path class="ln faint" d="M898,258 L898,266 M1072,258 L1072,266"/>
-  ${plant(904, 258)}
-  <path class="ln o" d="M950,258 L950,226 L986,226 L986,258 Z"/><path class="ln faint" d="M956,232 L980,232 L980,252 L956,252 Z"/>
-  ${jar(1010, 258)}${jar(1034, 258)}${jar(1058, 258)}
-  <line class="ln" x1="880" y1="318" x2="1090" y2="318"/>
-  <path class="ln faint" d="M898,318 L898,326 M1072,318 L1072,326"/>
-  <path class="ln" d="M916,318 L916,312 L952,312 L952,318 M914,312 L954,312 M918,306 L950,306 M914,306 L954,306"/>
-  ${bag(990, 318)}${bag(1018, 318)}${bag(1046, 318)}
 
   <!-- Barista one: working the La Marzocco against the right-hand wall -->
   <g>
