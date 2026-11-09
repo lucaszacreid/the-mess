@@ -447,3 +447,29 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
 }
 .address .contact a:hover,
 .address .contact a:focus-visible { color: var(--fg); }
+
+/* ---------- Hero wordmark sheen ---------- */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .hero .wordmark {
+    color: transparent;
+    background-image: linear-gradient(
+      100deg,
+      var(--fg) 0%,
+      var(--fg) 38%,
+      #ece8e6 50%,
+      var(--fg) 62%,
+      var(--fg) 100%
+    );
+    background-size: 260% 100%;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero .wordmark { animation: sheen 7s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; }
+  }
+}
+@keyframes sheen {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
+}
