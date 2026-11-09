@@ -366,3 +366,51 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
   .scroll-cue::after { transform: none; }
 }
 [tabindex="-1"]:focus { outline: none; }
+
+/* ---------- Opening countdown ---------- */
+.countdown {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  margin-top: clamp(16px, 3vw, 28px);
+}
+.countdown-label {
+  padding-left: 0.3em;
+  font-size: clamp(0.5625rem, 2vw, 0.6875rem);
+  color: var(--fg-dim);
+}
+.countdown-units {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(100%, 440px);
+  opacity: 0;
+  transition: opacity 900ms var(--ease);
+}
+.countdown.is-ready .countdown-units { opacity: 1; }
+.countdown.is-open .countdown-units { display: none; }
+.unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+.unit + .unit { border-left: 1px solid rgba(185, 179, 177, 0.22); }
+.unit .num {
+  font-size: clamp(1.375rem, 5.4vw, 2.25rem);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-indent: 0.08em;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  color: var(--fg);
+}
+.unit .unit-label {
+  padding-left: 0.3em;
+  font-size: clamp(0.5rem, 1.7vw, 0.5625rem);
+  letter-spacing: 0.3em;
+  color: var(--fg-dim);
+}

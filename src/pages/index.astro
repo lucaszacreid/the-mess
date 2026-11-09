@@ -125,6 +125,15 @@ const jsonLd = {
         <h1 class="wordmark">THE MESS</h1>
         <span class="divider" aria-hidden="true"></span>
         <p class="tagline">Coffee - Interiors - Wellbeing</p>
+        <div class="countdown" id="countdown" data-target="2026-11-15T08:00:00+00:00">
+          <p class="countdown-label">Opening Sunday 15 November</p>
+          <div class="countdown-units" aria-hidden="true">
+            <div class="unit"><span class="num" data-unit="d">00</span><span class="unit-label">Days</span></div>
+            <div class="unit"><span class="num" data-unit="h">00</span><span class="unit-label">Hours</span></div>
+            <div class="unit"><span class="num" data-unit="m">00</span><span class="unit-label">Minutes</span></div>
+            <div class="unit"><span class="num" data-unit="s">00</span><span class="unit-label">Seconds</span></div>
+          </div>
+        </div>
         <span class="scroll-cue" aria-hidden="true"></span>
       </section>
 
@@ -294,6 +303,32 @@ const jsonLd = {
           target.focus({ preventScroll: true });
         }
       });
+
+      // ---- Opening countdown ----
+      const countdown = document.getElementById('countdown');
+      if (countdown) {
+        const target = new Date(countdown.dataset.target!).getTime();
+        const nums = Object.fromEntries(
+          Array.from(countdown.querySelectorAll<HTMLElement>('[data-unit]')).map((el) => [el.dataset.unit!, el]),
+        );
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const tick = () => {
+          const diff = target - Date.now();
+          if (diff <= 0) {
+            countdown.classList.add('is-open');
+            countdown.querySelector('.countdown-label')!.textContent = 'Now Open';
+            return;
+          }
+          const s = Math.floor(diff / 1000);
+          nums.d.textContent = pad(Math.floor(s / 86400));
+          nums.h.textContent = pad(Math.floor((s % 86400) / 3600));
+          nums.m.textContent = pad(Math.floor((s % 3600) / 60));
+          nums.s.textContent = pad(s % 60);
+          setTimeout(tick, 1000 - (Date.now() % 1000) + 5);
+        };
+        tick();
+        countdown.classList.add('is-ready');
+      }
 
       // ---- Reveals ----
       const reveals = document.querySelectorAll<HTMLElement>('.reveal');
