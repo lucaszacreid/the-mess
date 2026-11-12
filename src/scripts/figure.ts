@@ -640,7 +640,8 @@ export class Figure {
     // Cup in the near hand; scale keeps the lettering readable and in proportion
     (this.q.cup as SVGGElement).style.display = this.hasCup ? '' : 'none';
     if (this.hasCup) {
-      const tilt = this.arms.kind === 'sip' ? 26 : 0;
+      // Tip the rim back toward the mouth (the base lifts away from the face)
+      const tilt = this.arms.kind === 'sip' ? -26 : 0;
       const sgn = Math.sign(this.facing) || 1;
       this.q.cup.setAttribute(
         'transform',
