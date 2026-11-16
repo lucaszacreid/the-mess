@@ -84,3 +84,4 @@ Priority: **High** blocks the main pages (Phases 2–4). **Med** improves rankin
 | In **Vercel**, redirect `the-mess-six.vercel.app` to `www.themessconcept.co.uk` (Project → Settings → Domains), or OK Claude to do it via the CLI | You / Claude | Med |
 | In **Cloudflare**, check Security → Bots / AI Crawl Control isn't blocking Googlebot, Google-Extended, GPTBot, ClaudeBot or PerplexityBot (you want AI assistants to cite you) | You | Med |
 | Optional: turn on HSTS `includeSubDomains` + `preload` in Cloudflare SSL/TLS → Edge Certificates | You | Low |
+| Optional: turn off Cloudflare **Scrape Shield → Email Address Obfuscation** (the site already opts out in code, since it was hiding the email from Google) | You | Low |
