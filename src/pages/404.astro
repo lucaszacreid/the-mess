@@ -1,0 +1,38 @@
+---
+import '@fontsource/inter/latin-700.css';
+import '@fontsource/jost/latin-300.css';
+import '@fontsource/jost/latin-400.css';
+import '../styles/global.css';
+import { business } from '../data/business';
+
+const year = new Date().getFullYear();
+---
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Page not found | {business.brand} Glasgow</title>
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#0A0A0A" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  </head>
+  <body>
+    <main class="hero not-found">
+      <h1 class="hero-mark">
+        <span class="wordmark">THE MESS</span>
+        <span class="submark">Concept Store</span>
+      </h1>
+      <span class="divider" aria-hidden="true"></span>
+      <p class="tagline">This page has wandered off</p>
+      <nav class="tagline not-found-links" aria-label="Helpful links">
+        <a href="/">Home</a><span class="sep" aria-hidden="true">-</span><a href="/#opening-times">Opening Times</a><span class="sep" aria-hidden="true">-</span><a href="/#visit">Find Us</a>
+      </nav>
+    </main>
+    <footer class="site-footer">
+      <p>{business.name} · {business.street}, {business.locality} {business.postcode} · <a href={`tel:${business.phoneHref}`}>{business.phone}</a></p>
+      <p>© {business.name} {year}</p>
+    </footer>
+  </body>
+</html>

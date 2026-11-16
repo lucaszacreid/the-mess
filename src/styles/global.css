@@ -367,54 +367,6 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
 }
 [tabindex="-1"]:focus { outline: none; }
 
-/* ---------- Opening countdown ---------- */
-.countdown {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 22px;
-  margin-top: clamp(16px, 3vw, 28px);
-}
-.countdown-label {
-  padding-left: 0.3em;
-  font-size: clamp(0.5625rem, 2vw, 0.6875rem);
-  color: var(--fg-dim);
-}
-.countdown-units {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  width: min(100%, 440px);
-  opacity: 0;
-  transition: opacity 900ms var(--ease);
-}
-.countdown.is-ready .countdown-units { opacity: 1; }
-.countdown.is-open .countdown-units { display: none; }
-.unit {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 0;
-}
-.unit + .unit { border-left: 1px solid rgba(185, 179, 177, 0.22); }
-.unit .num {
-  font-size: clamp(1.375rem, 5.4vw, 2.25rem);
-  font-weight: 300;
-  line-height: 1;
-  letter-spacing: 0.08em;
-  text-indent: 0.08em;
-  font-variant-numeric: tabular-nums lining-nums;
-  font-feature-settings: 'tnum' 1, 'lnum' 1;
-  color: var(--fg);
-}
-.unit .unit-label {
-  padding-left: 0.3em;
-  font-size: clamp(0.5rem, 1.7vw, 0.5625rem);
-  letter-spacing: 0.3em;
-  color: var(--fg-dim);
-}
-
 /* ---------- Hero sub-mark + contact ---------- */
 .hero-mark {
   display: flex;
@@ -578,3 +530,58 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
 .site-footer p + p { margin-top: 6px; }
 .site-footer a { transition: color 300ms var(--ease); }
 .site-footer a:hover { color: var(--fg); }
+
+/* ---------- Open now (replaces the opening countdown) ---------- */
+.open-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: clamp(16px, 3vw, 28px);
+  padding-left: 0.3em;
+  font-size: clamp(0.75rem, 2vw, 0.8125rem);
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.open-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--fg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .open-dot { animation: open-pulse 2.8s ease-in-out infinite; }
+}
+@keyframes open-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* ---------- 404 ---------- */
+.not-found .tagline + .tagline { margin-top: -8px; }
+.not-found-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 0.9em; }
+.not-found-links a { padding: 12px 0 12px 0.3em; color: var(--fg-dim); transition: color 400ms var(--ease); }
+.not-found-links a:hover, .not-found-links a:focus-visible { color: var(--fg); }
+
+/* ---------- Mobile legibility and tap targets ---------- */
+/* Comfortable 48px tap areas without changing the look */
+.text-link { padding-top: 14px; padding-bottom: 14px; }
+.text-link::after { bottom: 10px; }
+.address .contact a { padding: 12px 0; }
+.menu a { padding-top: 12px; padding-bottom: 12px; }
+.hero .tagline a { padding-top: 12px; padding-bottom: 12px; }
+.hero .tagline { row-gap: 0; }
+.site-footer a { padding: 14px 0; }
+
+@media (max-width: 767px) {
+  /* Keep running text at 12px or more on phones */
+  .offering p,
+  .local-note,
+  .site-footer,
+  .times dl div,
+  .times .sign-foot,
+  .text-link,
+  .hero .tagline,
+  .lede { font-size: 0.75rem; }
+  .hero .tagline { letter-spacing: 0.24em; }
+}
+.header-bar .wordmark { padding-top: 16px; padding-bottom: 16px; }
