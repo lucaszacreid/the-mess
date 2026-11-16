@@ -585,3 +585,16 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
   .hero .tagline { letter-spacing: 0.24em; }
 }
 .header-bar .wordmark { padding-top: 16px; padding-bottom: 16px; }
+
+/* Small print under an offering (e.g. the wellness disclaimer) */
+.offering .offering-note {
+  margin-top: 14px;
+  font-size: 0.625rem;
+  line-height: 2;
+  letter-spacing: 0.2em;
+  color: var(--fg-dim);
+  opacity: 0.8;
+}
+@media (max-width: 767px) {
+  .offering .offering-note { font-size: 0.75rem; }
+}

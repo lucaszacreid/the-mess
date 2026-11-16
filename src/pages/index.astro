@@ -33,8 +33,14 @@ const nav = [
 const offerings = [
   { id: 'coffee', title: 'Coffee', copy: 'Speciality coffee, served alongside artisan pastries.' },
   { id: 'interiors', title: 'Interiors', copy: 'Furniture, objects and homeware sourced from around the world, in limited quantities. Interior design services available.' },
-  { id: 'pilates', title: 'Pilates', copy: 'Small mat and reformer classes, guided with care.' },
-  { id: 'wellness', title: 'Wellness', copy: 'Quiet treatments and sessions to restore and reset.' },
+  { id: 'pilates', title: 'Pilates', copy: 'Reformer Pilates classes, guided with care.' },
+  {
+    id: 'wellness',
+    title: 'Wellness',
+    copy: 'Calm, quiet sessions to relax and unwind, including Reiki.',
+    // ASA/CAP: complementary therapies must not claim to treat or cure anything (docs/seo/06-compliance.md)
+    note: 'Our wellbeing sessions are for relaxation and are not a substitute for medical advice or treatment.',
+  },
 ];
 
 const days = [...business.hours.days];
@@ -113,8 +119,8 @@ const jsonLd = {
       sameAs: [instagram, googleProfile].filter(Boolean),
       department: [
         department('HomeGoodsStore', 'Interiors', 'Furniture, objects and homeware sourced from around the world in limited quantities, plus interior design services.'),
-        department('HealthClub', 'Pilates', 'Small mat and reformer pilates classes.'),
-        department('HealthAndBeautyBusiness', 'Wellness', 'Wellbeing treatments and sessions, including reiki.'),
+        department('HealthClub', 'Pilates', 'Reformer Pilates classes.'),
+        department('HealthAndBeautyBusiness', 'Wellness', 'Relaxation and wellbeing sessions, including Reiki.'),
       ],
     },
   ],
@@ -234,6 +240,7 @@ const jsonLd = {
               <span class="divider" aria-hidden="true"></span>
               <Fragment set:html="<!-- PLACEHOLDER COPY -->" />
               <p>{o.copy}</p>
+              {o.note && <p class="offering-note">{o.note}</p>}
             </article>
           ))}
         </div>
