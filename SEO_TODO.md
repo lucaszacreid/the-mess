@@ -20,7 +20,7 @@ Priority: **High** blocks the main pages (Phases 2–4). **Med** improves rankin
 
 | Placeholder | What's needed | Owner | Priority |
 |---|---|---|---|
-| `{{MENU}}` | Full menu with prices: drinks, pastries, food. Text, a photo or a PDF is fine as a source; it'll be rebuilt as HTML | You | High |
+| `{{MENU}}` | ✅ **Drinks added** (from the menu board, in `src/data/menu.ts`). Still needed: pastries and food with prices | You | Med |
 | `{{ROASTER}}` | Coffee roaster and bean origins, plus any signature drinks | You | Med |
 | `{{DIETARY}}` | Oat/plant milks, vegan, gluten-free options (only what's true) | You | Med |
 | `{{BAKER}}` | Who supplies the pastries (name, or keep it as "artisan") | You | Low |

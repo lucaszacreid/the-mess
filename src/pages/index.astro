@@ -6,6 +6,7 @@ import 'lenis/dist/lenis.css';
 import '../styles/global.css';
 import CoffeeBarSketch from '../components/CoffeeBarSketch.astro';
 import { business, signTime } from '../data/business';
+import { menu, gbp } from '../data/menu';
 // Preload the two faces used above the fold so text doesn't reflow as fonts arrive.
 import jostLight from '@fontsource/jost/files/jost-latin-300-normal.woff2?url';
 import interBold from '@fontsource/inter/files/inter-latin-700-normal.woff2?url';
@@ -23,6 +24,7 @@ const { directions, instagram, loyalty: loyaltyUrl, googleReview: googleReviewUr
 const nav = [
   ['about', 'About'],
   ['coffee', 'Coffee'],
+  ['coffee-menu', 'Menu'],
   ['interiors', 'Interiors'],
   ['pilates', 'Pilates'],
   ['wellness', 'Wellness'],
@@ -31,7 +33,7 @@ const nav = [
 ];
 
 const offerings = [
-  { id: 'coffee', title: 'Coffee', copy: 'Speciality coffee, served alongside artisan pastries.' },
+  { id: 'coffee', title: 'Coffee', copy: 'Speciality coffee, served alongside artisan pastries.', link: { href: '#coffee-menu', label: 'See the menu' } },
   { id: 'interiors', title: 'Interiors', copy: 'Furniture, objects and homeware sourced from around the world, in limited quantities. Interior design services available.' },
   { id: 'pilates', title: 'Pilates', copy: 'Reformer Pilates classes, guided with care.' },
   {
@@ -68,6 +70,23 @@ const department = (type: string, name: string, desc: string) => ({
   url: `${site}/#${name.toLowerCase()}`,
   parentOrganization: { '@id': bizId },
 });
+
+const menuLd = {
+  '@type': 'Menu',
+  '@id': `${site}/#coffee-menu`,
+  name: `${business.name} menu`,
+  url: `${site}/#coffee-menu`,
+  inLanguage: 'en-GB',
+  hasMenuSection: menu.map((sec) => ({
+    '@type': 'MenuSection',
+    name: sec.name,
+    hasMenuItem: sec.items.map((item) => ({
+      '@type': 'MenuItem',
+      name: item.name,
+      offers: { '@type': 'Offer', price: item.price.toFixed(2), priceCurrency: 'GBP' },
+    })),
+  })),
+};
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -114,6 +133,7 @@ const jsonLd = {
       priceRange: '££',
       currenciesAccepted: 'GBP',
       servesCuisine: ['Coffee', 'Pastries'],
+      hasMenu: { '@id': `${site}/#coffee-menu` },
       acceptsReservations: false,
       keywords: 'coffee shop, speciality coffee, cafe, pastries, concept store, interiors, homeware, interior design, reformer pilates, wellbeing, reiki, West End, Glasgow',
       sameAs: [instagram, googleProfile].filter(Boolean),
@@ -123,6 +143,7 @@ const jsonLd = {
         department('HealthAndBeautyBusiness', 'Wellness', 'Relaxation and wellbeing sessions, including Reiki.'),
       ],
     },
+    menuLd,
   ],
 };
 ---
@@ -241,8 +262,32 @@ const jsonLd = {
               <Fragment set:html="<!-- PLACEHOLDER COPY -->" />
               <p>{o.copy}</p>
               {o.note && <p class="offering-note">{o.note}</p>}
+              {o.link && <a class="text-link offering-link" href={o.link.href}>{o.link.label}</a>}
             </article>
           ))}
+        </div>
+      </section>
+
+      <section class="section" id="coffee-menu" aria-labelledby="menu-title">
+        <div class="menu-board reveal">
+          <h2 class="eyebrow" id="menu-title">Menu</h2>
+          <div class="menu-cols">
+            {menu.map((sec) => (
+              <div class="menu-group" id={sec.id}>
+                <h3>{sec.name}</h3>
+                <dl>
+                  {sec.items.map((item) => (
+                    <div>
+                      <dt>{item.name}</dt>
+                      <dd><data value={item.price.toFixed(2)}>{gbp(item.price)}</data></dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ))}
+          </div>
+          <span class="divider" aria-hidden="true"></span>
+          <p class="sign-foot">Coffee · Interiors · Wellbeing</p>
         </div>
       </section>
 
