@@ -21,16 +21,19 @@ export const business = {
   phoneHref: '+447856050231',
   email: 'hello@themessconcept.co.uk',
   openedOn: '2026-11-15',
+  /** Google Maps place ID for the Business Profile (resolved from the profile's review link). */
+  googlePlaceId: 'ChIJe6kB_TFFiEgR_J8gQLLPoFE',
   hours: {
     days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
     opens: '08:00',
     closes: '18:00',
   },
   links: {
-    directions: 'https://www.google.com/maps/search/?api=1&query=37+Otago+Street+Glasgow+G12+8JJ',
+    // Opens the Business Profile in Google Maps (with its Directions button), not just the address
+    directions: 'https://www.google.com/maps/search/?api=1&query=The+Mess+Concept+37+Otago+Street+Glasgow&query_place_id=ChIJe6kB_TFFiEgR_J8gQLLPoFE',
     instagram: 'https://www.instagram.com/themessconcept/',
-    googleProfile: '', // {{GBP_URL}}
-    googleReview: '', // {{GBP_REVIEW_URL}}: shows "Leave a Review" once set
+    googleProfile: 'https://www.google.com/maps/place/?q=place_id:ChIJe6kB_TFFiEgR_J8gQLLPoFE',
+    googleReview: 'https://g.page/r/CfyfIECyz6BREBM/review',
     loyalty: '', // loyalty card sign-up link: shows "Loyalty Card" once set
   },
   /** Google Search Console HTML-tag verification (the content="…" value only). */

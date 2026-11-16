@@ -9,9 +9,9 @@ Priority: **High** blocks the main pages (Phases 2–4). **Med** improves rankin
 
 | Placeholder | What's needed | Owner | Priority |
 |---|---|---|---|
-| `{{GBP_NAME}}` | The exact name on the profile, character for character (e.g. "The Mess Concept" or "THE MESS"). The site, its data and every listing must match it | You | High |
-| `{{GBP_URL}}` | The profile's Google Maps link (Share → copy link) | You | High |
-| `{{GBP_REVIEW_URL}}` | The "Ask for reviews" link from the profile dashboard. Turns on the LEAVE A REVIEW link | You | High |
+| ~~`{{GBP_NAME}}`~~ ✅ **The Mess Concept** (confirmed from the profile; matches the site) | The exact name on the profile, character for character (e.g. "The Mess Concept" or "THE MESS"). The site, its data and every listing must match it | You | High |
+| ~~`{{GBP_URL}}`~~ ✅ place ID `ChIJe6kB_TFFiEgR_J8gQLLPoFE`, linked from Get Directions and the structured data | The profile's Google Maps link (Share → copy link) | You | High |
+| ~~`{{GBP_REVIEW_URL}}`~~ ✅ https://g.page/r/CfyfIECyz6BREBM/review, live on the site plus print cards in `brand-assets/print/` | The "Ask for reviews" link from the profile dashboard. Turns on the LEAVE A REVIEW link | You | High |
 | `{{GBP_CATEGORIES}}` | Primary and secondary categories you chose | You | Med |
 | `{{GBP_PROFILES}}` | One profile, or separate ones for café, Pilates and wellness? If separate, send each name and link | You | High |
 | `{{GBP_WEBSITE_LINK}}` | Confirm the profile's website link is `https://www.themessconcept.co.uk/?utm_source=google&utm_medium=organic&utm_campaign=gbp` | You | Med |
