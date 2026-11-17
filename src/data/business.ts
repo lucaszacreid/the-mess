@@ -38,6 +38,8 @@ export const business = {
   },
   /** Google Search Console HTML-tag verification (the content="…" value only). */
   googleVerification: 'rm4fy8an2zqR8xhOERDkUl3txCi_ZLr46M2DIVB15N4',
+  /** Bing Webmaster Tools meta-tag verification (msvalidate.01 content value). */
+  bingVerification: 'BA6F73957295CE6C469700500FC25C8C',
 } as const;
 
 /** Display form of a 24h time: "08:00" → "08.00" (as on the shop sign). */

@@ -18,7 +18,7 @@ const description =
 const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
 const ogImage = `${site}/og.jpg`;
 const year = new Date().getFullYear();
-const { email, phone, phoneHref, googleVerification } = business;
+const { email, phone, phoneHref, googleVerification, bingVerification } = business;
 const { directions, instagram, loyalty: loyaltyUrl, googleReview: googleReviewUrl, googleProfile } = business.links;
 
 const nav = [
@@ -164,6 +164,7 @@ const jsonLd = {
     <meta name="geo.position" content={`${business.lat};${business.lng}`} />
     <meta name="ICBM" content={`${business.lat}, ${business.lng}`} />
     {googleVerification && <meta name="google-site-verification" content={googleVerification} />}
+    {bingVerification && <meta name="msvalidate.01" content={bingVerification} />}
     <link rel="sitemap" href="/sitemap.xml" />
     <link rel="canonical" href={site + '/'} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
