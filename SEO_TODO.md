@@ -78,7 +78,7 @@ Priority: **High** blocks the main pages (Phases 2–4). **Med** improves rankin
 
 | Task | Owner | Priority |
 |---|---|---|
-| ✅ Verification tag live (17 Nov 2026). Click **Verify**, then submit the sitemap. ~~Verify the domain in **Google Search Console** (a DNS TXT record in Cloudflare is easiest, or send the HTML tag code for `googleVerification`) and submit `https://www.themessconcept.co.uk/sitemap.xml`~~ | You | High |
+| ✅ Verified in Search Console (17 Nov 2026). Keep the tag in `business.ts`. Submit the sitemap if not done. ~~Verify the domain in **Google Search Console** (a DNS TXT record in Cloudflare is easiest, or send the HTML tag code for `googleVerification`) and submit `https://www.themessconcept.co.uk/sitemap.xml`~~ | You | High |
 | Verify in **Bing Webmaster Tools** (can import from Search Console) and submit the sitemap | You | Med |
 | Create a **GA4** property and send the measurement ID (`G-…`) so analytics and consent mode can be added | You | Med |
 | In **Vercel**, redirect `the-mess-six.vercel.app` to `www.themessconcept.co.uk` (Project → Settings → Domains), or OK Claude to do it via the CLI | You / Claude | Med |
