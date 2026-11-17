@@ -1,4 +1,4 @@
-// The café menu, as on the printed menu board. Prices in GBP.
+// The café menu, exactly as on the printed menu board (order and wording). Prices in GBP.
 // Feeds the Menu section on the site and the Menu structured data.
 
 export interface MenuItem { name: string; price: number }
@@ -23,8 +23,10 @@ export const menu: MenuSection[] = [
       { name: 'Tea', price: 2.7 },
       { name: 'Chai', price: 3.9 },
       { name: 'Chai Latte', price: 4.2 },
-      { name: 'Hot Chocolate (Small)', price: 3.9 },
       { name: 'Hot Chocolate (Large)', price: 4.4 },
+      { name: 'Hot Chocolate (Small)', price: 3.9 },
+      { name: 'Kombucha', price: 3.5 },
+      { name: 'Latte', price: 3.9 },
     ],
   },
   {
@@ -33,13 +35,12 @@ export const menu: MenuSection[] = [
     items: [
       { name: 'Iced Latte', price: 4.2 },
       { name: 'Iced Matcha', price: 5.2 },
-      { name: 'Iced Mango Matcha', price: 5.2 },
       { name: 'Iced Americano', price: 3.5 },
       { name: 'Iced Tea', price: 3.5 },
-      { name: 'Kombucha', price: 3.5 },
-      { name: 'Soda', price: 2.7 },
+      { name: 'Iced Mango Matcha', price: 5.2 },
       { name: 'Still Water', price: 2.0 },
       { name: 'Sparkling Water', price: 2.0 },
+      { name: 'Soda', price: 2.7 },
     ],
   },
 ];
