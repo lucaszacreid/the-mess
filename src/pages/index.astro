@@ -289,6 +289,12 @@ const jsonLd = {
           </div>
           <span class="divider" aria-hidden="true"></span>
           <p class="sign-foot">Coffee · Interiors · Wellbeing</p>
+          {googleReviewUrl && (
+            <p class="menu-review">
+              How was your visit?
+              <a class="text-link" href={googleReviewUrl} target="_blank" rel="noopener noreferrer">Leave a Google Review</a>
+            </p>
+          )}
         </div>
       </section>
 
@@ -345,6 +351,9 @@ const jsonLd = {
 
     <footer class="site-footer">
       <p>{business.name} · {business.street}, {business.locality} {business.postcode} · <a href={`tel:${phoneHref}`}>{phone}</a></p>
+      {googleReviewUrl && (
+        <p><a href={googleReviewUrl} target="_blank" rel="noopener noreferrer">Leave us a Google review</a></p>
+      )}
       <p>© {business.name} {year}</p>
     </footer>
 
