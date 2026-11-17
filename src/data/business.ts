@@ -37,7 +37,7 @@ export const business = {
     loyalty: '', // loyalty card sign-up link: shows "Loyalty Card" once set
   },
   /** Google Search Console HTML-tag verification (the content="…" value only). */
-  googleVerification: '',
+  googleVerification: 'rm4fy8an2zqR8xhOERDkUl3txCi_ZLr46M2DIVB15N4',
 } as const;
 
 /** Display form of a 24h time: "08:00" → "08.00" (as on the shop sign). */
