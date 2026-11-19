@@ -650,3 +650,57 @@ main [id] { scroll-margin-top: calc(var(--header-h) + 24px); }
   color: var(--fg-dim);
 }
 .offering .offering-link { margin-top: 10px; }
+
+/* ---------- Offering pages (/coffee/, /interiors/, /pilates/, /wellness/) ---------- */
+.page-hero {
+  min-height: 78vh;
+  min-height: 78svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(24px, 3.5vw, 40px);
+  padding: calc(var(--header-h) + 40px) var(--gutter) 72px;
+  text-align: center;
+}
+.page-title {
+  font-family: var(--font-mark);
+  font-weight: 700;
+  font-size: clamp(1.75rem, 7.4vw, 5rem);
+  line-height: 1;
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+  white-space: nowrap;
+}
+.page-sub {
+  padding-left: 0.3em;
+  font-size: clamp(0.75rem, 2.2vw, 0.8125rem);
+  color: var(--fg);
+}
+.page-place {
+  padding-left: 0.3em;
+  font-size: 0.6875rem;
+  color: var(--fg-dim);
+}
+.page-hero + .section { border-top: 1px solid rgba(185, 179, 177, 0.12); }
+.page-note {
+  max-width: 30em;
+  margin: 32px auto 0;
+  padding-left: 0.3em;
+  font-size: 0.625rem;
+  line-height: 2;
+  letter-spacing: 0.2em;
+  color: var(--fg-dim);
+  opacity: 0.8;
+}
+.explore-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 2.4em;
+}
+.menu a[aria-current='page'] { color: var(--fg); }
+@media (max-width: 767px) {
+  .page-place, .page-note { font-size: 0.75rem; }
+  .page-title { letter-spacing: 0.38em; text-indent: 0.38em; }
+}

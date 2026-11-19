@@ -1,0 +1,38 @@
+---
+import { business } from '../data/business';
+const { email, phone, phoneHref } = business;
+const { directions, instagram, loyalty, googleReview } = business.links;
+---
+<section class="section" id="visit" aria-labelledby="visit-title">
+  <div class="reveal">
+    <h2 class="eyebrow" id="visit-title">Visit</h2>
+    <address class="address">
+      <span class="name">{business.name}</span>
+      <span class="muted">{business.street}</span>
+      <span class="muted">{business.locality} {business.postcode}</span>
+      <span class="contact">
+        <Fragment set:html="<!--email_off-->" /><a href={`mailto:${email}`}>{email}</a><Fragment set:html="<!--/email_off-->" />
+        <a href={`tel:${phoneHref}`}>{phone}</a>
+      </span>
+    </address>
+    <p class="local-note">Coffee shop in Glasgow's West End, a short walk from Kelvinbridge Subway.</p>
+    <div class="visit-links">
+      <a class="text-link" href={directions} target="_blank" rel="noopener noreferrer">
+        Get Directions<span class="sr-only"> (opens in a new tab)</span>
+      </a>
+      <a class="text-link" href={instagram} target="_blank" rel="noopener noreferrer">
+        Instagram<span class="sr-only"> (opens in a new tab)</span>
+      </a>
+      {googleReview && (
+        <a class="text-link" href={googleReview} target="_blank" rel="noopener noreferrer">
+          Leave a Review<span class="sr-only"> on Google (opens in a new tab)</span>
+        </a>
+      )}
+      {loyalty && (
+        <a class="text-link" href={loyalty} target="_blank" rel="noopener noreferrer">
+          Loyalty Card<span class="sr-only"> (add to your phone's wallet, opens in a new tab)</span>
+        </a>
+      )}
+    </div>
+  </div>
+</section>

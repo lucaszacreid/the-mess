@@ -1,0 +1,70 @@
+---
+// One page per side of THE MESS: /coffee/, /interiors/, /pilates/, /wellness/
+import Base from '../layouts/Base.astro';
+import MenuBoard from '../components/MenuBoard.astro';
+import { offerings, type Offering } from '../data/offerings';
+import { business } from '../data/business';
+import { ids, departmentLd, menuLd } from '../data/schema';
+
+export function getStaticPaths() {
+  return offerings.map((o) => ({ params: { slug: o.slug }, props: { o } }));
+}
+
+const { o } = Astro.props as { o: Offering };
+const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const path = `/${o.slug}/`;
+const url = site + path;
+const others = offerings.filter((x) => x.slug !== o.slug);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebPage',
+      '@id': `${url}#webpage`,
+      url,
+      name: o.title,
+      description: o.description,
+      inLanguage: 'en-GB',
+      isPartOf: { '@id': ids(site).website },
+      about: { '@id': o.schemaType ? `${url}#department` : ids(site).business },
+      breadcrumb: { '@id': `${url}#breadcrumb` },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${url}#breadcrumb`,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: business.brand, item: `${site}/` },
+        { '@type': 'ListItem', position: 2, name: o.name, item: url },
+      ],
+    },
+    o.schemaType ? departmentLd(site, o) : menuLd(site),
+  ],
+};
+---
+<Base title={o.title} description={o.description} path={path} jsonLd={jsonLd} current={o.slug}>
+  <section class="page-hero" id="top" aria-labelledby="page-title">
+    <h1 class="page-title" id="page-title">{o.name}</h1>
+    <span class="divider" aria-hidden="true"></span>
+    <p class="page-sub">{o.sub}</p>
+    <p class="page-place">{business.street} · Glasgow West End</p>
+  </section>
+
+  <section class="section page-intro" aria-label={`About ${o.name}`}>
+    <div class="reveal">
+      <p class="lede">{o.copy}</p>
+      {o.note && <p class="page-note">{o.note}</p>}
+    </div>
+  </section>
+
+  {o.slug === 'coffee' && <MenuBoard id="menu" />}
+
+  <section class="section explore" aria-labelledby="explore-title">
+    <div class="reveal">
+      <h2 class="eyebrow" id="explore-title">Also at THE MESS</h2>
+      <nav class="explore-links" aria-label="Also at THE MESS">
+        {others.map((x) => <a class="text-link" href={`/${x.slug}/`}>{x.name}</a>)}
+      </nav>
+    </div>
+  </section>
+</Base>

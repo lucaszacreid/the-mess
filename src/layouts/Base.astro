@@ -1,0 +1,260 @@
+---
+import '@fontsource/inter/latin-700.css';
+import '@fontsource/jost/latin-300.css';
+import '@fontsource/jost/latin-400.css';
+import 'lenis/dist/lenis.css';
+import '../styles/global.css';
+import { business } from '../data/business';
+import { offerings } from '../data/offerings';
+import OpeningTimes from '../components/OpeningTimes.astro';
+import Visit from '../components/Visit.astro';
+// Preload the two faces used above the fold so text doesn't reflow as fonts arrive.
+import jostLight from '@fontsource/jost/files/jost-latin-300-normal.woff2?url';
+import interBold from '@fontsource/inter/files/inter-latin-700-normal.woff2?url';
+
+interface Props {
+  title: string;
+  description: string;
+  path: string; // '/' or '/coffee/'
+  jsonLd: object;
+  current?: string; // slug of the page, for aria-current in the menu
+}
+const { title, description, path, jsonLd, current } = Astro.props;
+const home = path === '/';
+const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const url = site + path;
+const ogImage = `${site}/og.jpg`;
+const year = new Date().getFullYear();
+const { phone, phoneHref, googleVerification, bingVerification } = business;
+const review = business.links.googleReview;
+
+const nav: [string, string, string?][] = [
+  ['/#about', 'About'],
+  ...offerings.map((o) => [`/${o.slug}/`, o.name, o.slug] as [string, string, string]),
+  [home ? '#coffee-menu' : '/coffee/#menu', 'Menu'],
+  ['#opening-times', 'Opening Times'],
+  ['#visit', 'Visit'],
+];
+---
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preload" href={jostLight} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={interBold} as="font" type="font/woff2" crossorigin />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0A0A0A" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="geo.region" content="GB-GLG" />
+    <meta name="geo.placename" content="Glasgow" />
+    <meta name="geo.position" content={`${business.lat};${business.lng}`} />
+    <meta name="ICBM" content={`${business.lat}, ${business.lng}`} />
+    {home && googleVerification && <meta name="google-site-verification" content={googleVerification} />}
+    {home && bingVerification && <meta name="msvalidate.01" content={bingVerification} />}
+    <link rel="sitemap" href="/sitemap.xml" />
+    <link rel="canonical" href={url} />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-48.png" sizes="48x48" type="image/png" />
+    <link rel="icon" href="/favicon-96.png" sizes="96x96" type="image/png" />
+    <link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="THE MESS" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="THE MESS, coffee shop and concept store on Otago Street, Glasgow" />
+    <meta property="business:contact_data:street_address" content={business.street} />
+    <meta property="business:contact_data:locality" content={business.locality} />
+    <meta property="business:contact_data:postal_code" content={business.postcode} />
+    <meta property="business:contact_data:country_name" content="United Kingdom" />
+    <meta property="og:locale" content="en_GB" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class:list={['site-header', { 'is-scrolled': !home }]} id="site-header" data-home={home ? '' : undefined}>
+      <div class="header-bar">
+        <a class="wordmark" href={home ? '#top' : '/'} aria-label={home ? 'THE MESS, back to top' : 'THE MESS, home'}>THE MESS</a>
+        <button
+          class="menu-toggle"
+          id="menu-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="menu"
+          aria-label="Open menu"
+        >
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <nav class="menu" id="menu" aria-label="Main" inert>
+        <ul>
+          {nav.map(([href, label, slug]) => (
+            <li><a href={href} aria-current={slug && slug === current ? 'page' : undefined}>{label}</a></li>
+          ))}
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main">
+      <slot />
+      <OpeningTimes />
+      <Visit />
+    </main>
+
+    <footer class="site-footer">
+      <p>{business.name} · {business.street}, {business.locality} {business.postcode} · <a href={`tel:${phoneHref}`}>{phone}</a></p>
+      {review && (
+        <p><a href={review} target="_blank" rel="noopener noreferrer">Leave us a Google review</a></p>
+      )}
+      <p>© {business.name} {year}</p>
+      <p class="credit">Made by <Fragment set:html="<!--email_off-->" /><a href="mailto:lucaszacreid33@gmail.com">Lucas Reid</a><Fragment set:html="<!--/email_off-->" /></p>
+    </footer>
+
+    <script>
+      import Lenis from 'lenis';
+
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const header = document.getElementById('site-header') as HTMLElement;
+      const toggle = document.getElementById('menu-toggle') as HTMLButtonElement;
+      const menu = document.getElementById('menu') as HTMLElement;
+      const isHome = header.hasAttribute('data-home');
+
+      // ---- Smooth scroll ----
+      let lenis: Lenis | null = null;
+      if (!reduced) {
+        lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
+        const raf = (t: number) => {
+          lenis!.raf(t);
+          requestAnimationFrame(raf);
+        };
+        requestAnimationFrame(raf);
+      }
+
+      const headerOffset = () => header.offsetHeight;
+
+      function scrollToHash(hash: string) {
+        const target = hash === '#top' ? document.body : document.querySelector<HTMLElement>(hash);
+        if (!target) return;
+        if (lenis) {
+          // Lenis honours the sections' CSS scroll-margin-top (= header height), so no extra offset here.
+          lenis.scrollTo(hash === '#top' ? 0 : target, { duration: 1.4 });
+        } else {
+          const y = hash === '#top' ? 0 : target.getBoundingClientRect().top + window.scrollY - headerOffset();
+          window.scrollTo({ top: y, behavior: 'auto' });
+        }
+        history.replaceState(null, '', hash === '#top' ? location.pathname : hash);
+      }
+
+      // ---- Header state (the wordmark fades in after the hero on the home page) ----
+      if (isHome) {
+        const onScroll = () => header.classList.toggle('is-scrolled', window.scrollY > window.innerHeight * 0.6);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+      }
+
+      // ---- Menu ----
+      let lastFocus: HTMLElement | null = null;
+      const focusables = () =>
+        Array.from(header.querySelectorAll<HTMLElement>('a[href], button')).filter((el) => !el.closest('[inert]'));
+
+      function setMenu(open: boolean) {
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        menu.classList.toggle('is-open', open);
+        header.classList.toggle('is-open', open);
+        document.body.classList.toggle('menu-open', open);
+        if (open) {
+          menu.removeAttribute('inert');
+          lenis?.stop();
+          lastFocus = document.activeElement as HTMLElement;
+          menu.querySelector<HTMLElement>('a')?.focus({ preventScroll: true });
+        } else {
+          menu.setAttribute('inert', '');
+          lenis?.start();
+        }
+      }
+
+      toggle.addEventListener('click', () => {
+        const open = toggle.getAttribute('aria-expanded') !== 'true';
+        setMenu(open);
+        if (!open) (lastFocus ?? toggle).focus({ preventScroll: true });
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (toggle.getAttribute('aria-expanded') !== 'true') return;
+        if (e.key === 'Escape') {
+          setMenu(false);
+          toggle.focus({ preventScroll: true });
+        } else if (e.key === 'Tab') {
+          const els = focusables();
+          const first = els[0];
+          const last = els[els.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      });
+
+      // ---- Links to a section on this page scroll smoothly; others navigate normally ----
+      document.addEventListener('click', (e) => {
+        const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href]');
+        if (!a || a.target === '_blank') return;
+        const url = new URL(a.href, location.href);
+        if (url.origin !== location.origin || url.pathname !== location.pathname || !url.hash) return;
+        const hash = url.hash;
+        if (hash === '#main') return; // let the skip link behave natively
+        if (hash !== '#top' && !document.querySelector(hash)) return;
+        e.preventDefault();
+        if (menu.classList.contains('is-open')) setMenu(false);
+        scrollToHash(hash);
+        const target = document.querySelector<HTMLElement>(hash);
+        if (target && hash !== '#top') {
+          target.setAttribute('tabindex', '-1');
+          target.focus({ preventScroll: true });
+        }
+      });
+
+      // ---- Reveals ----
+      const reveals = document.querySelectorAll<HTMLElement>('.reveal');
+      if (reduced || !('IntersectionObserver' in window)) {
+        reveals.forEach((el) => el.classList.add('is-visible'));
+      } else {
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                io.unobserve(entry.target);
+              }
+            });
+          },
+          { rootMargin: '0px 0px -10% 0px', threshold: 0.15 },
+        );
+        reveals.forEach((el) => io.observe(el));
+      }
+    </script>
+  </body>
+</html>

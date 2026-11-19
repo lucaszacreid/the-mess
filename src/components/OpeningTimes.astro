@@ -1,0 +1,21 @@
+---
+import { business, signTime } from '../data/business';
+const days = [...business.hours.days];
+const opens = signTime(business.hours.opens);
+const closes = signTime(business.hours.closes);
+---
+<section class="section" id="opening-times" aria-labelledby="times-title">
+  <div class="times reveal">
+    <h2 class="eyebrow" id="times-title">Opening Times</h2>
+    <dl>
+      {days.map((d) => (
+        <div>
+          <dt>{d}</dt>
+          <dd><time datetime={business.hours.opens}>{opens}</time> – <time datetime={business.hours.closes}>{closes}</time></dd>
+        </div>
+      ))}
+    </dl>
+    <span class="divider" aria-hidden="true"></span>
+    <p class="sign-foot">Coffee, Interiors and Wellbeing</p>
+  </div>
+</section>
